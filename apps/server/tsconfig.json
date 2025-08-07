@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "commonjs",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "src", 
+    "allowJs": true,
+    "resolveJsonModule": true,
+    // "noEmit": true
+  },
+  "include": ["src/**/*.ts",  "src/types/fastify.d.ts", "src/db/migrate.js", "src/db/schema.js", "src/db/connection.js", "src/db/seed.js"],
+  "exclude": ["node_modules", "dist"]
+}
