@@ -18,6 +18,7 @@ import * as yup from "yup";
 import { login } from "@/lib/api/auth";
 import { useMutation } from "@tanstack/react-query";
 import { UserRoleEnum } from "@/types";
+
 export const registerSchema = yup.object().shape({
   email: yup.string().email("Invalid email").required("Email is required"),
   password: yup

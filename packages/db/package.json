@@ -1,0 +1,27 @@
+{
+  "name": "@jims/db",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/schema.js",
+  "exports": {
+    "./*": "./src/*.js",
+    ".": {
+      "import": "./src/schema.js"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.1",
+    "drizzle-orm": "^0.44.4",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "latest"
+  }
+}

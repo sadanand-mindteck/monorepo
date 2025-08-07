@@ -1,0 +1,22 @@
+{
+  "name": "@jims/types",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "latest"
+  },
+  "dependencies": {
+    "@jims/db": "workspace:*",
+    "drizzle-zod": "^0.8.3",
+    "zod": "^4.0.15"
+  }
+}

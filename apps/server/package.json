@@ -1,5 +1,5 @@
 {
-  "name": "jims-backend",
+  "name": "jims-server",
   "version": "1.0.0",
   "description": "JIMS Backend API with Fastify, Drizzle ORM, and PostgreSQL",
   "main": "src/server.js",
@@ -39,8 +39,7 @@
     "speakeasy": "^2.0.0",
     "twilio": "^5.8.0",
     "uuid": "^11.1.0",
-    "zod": "^4.0.14",
-    "zod-to-json-schema": "^3.24.6"
+    "zod": "^4.0.14"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
