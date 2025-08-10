@@ -2,12 +2,8 @@
   "name": "@jims/db",
   "version": "0.0.0",
   "private": true,
-  "main": "src/schema.js",
   "exports": {
-    "./*": "./src/*.js",
-    ".": {
-      "import": "./src/schema.js"
-    }
+  "./*": "./dist/*.js"
   },
   "type": "module",
   "scripts": {

@@ -1,101 +1,95 @@
-import { db } from "../db/connection.js";
-import { jammers, organizations } from "../db/schema.js";
-import { createJammerSchema, updateJammerSchema } from "../schemas/jammer.js";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { db } from "@jims/db/connection";
+import { jammers, organizations } from "@jims/db/schema";
+import {
+  createJammerSchema,
+  updateJammerSchema,
+  JammerInput,
+  JammerQuery,
+  JammerStatus,
+  JammerInputUpdate,
+  jammerQuerySchema,
+} from "@jims/types/jammer";
 import { eq, desc, like, or, count, and } from "drizzle-orm";
 import { FastifyInstance, FastifyRequest } from "fastify";
-import { JammerInput, JammerQuery, JammerStatus, JammerUpdate } from "../types/jammers.types.js";
-
+import { ZodTypeProvider } from "fastify-type-provider-zod";
+import { requestParam } from "@jims/types/common";
 
 export default async function jammerRoutes(fastify: FastifyInstance) {
   // Get all jammers
-  fastify.get(
-    "/",
-    {},
-    async (request: FastifyRequest<{ Querystring: JammerQuery }>, reply) => {
-      try {
-        const {
-          status,
-          location,
-          model,
-          search,
-          page = 1,
-          limit = 10,
-        } = request.query;
-        const offset = (page - 1) * limit;
+  fastify.withTypeProvider<ZodTypeProvider>().get(
+    "",
+    {
+      schema: {
+        tags: ["Jammers"],
+        summary: "Get all jammer",
+        querystring: jammerQuerySchema,
+      },
+    },
+    async (request, reply) => {
+      const { status, model, search, page = 1, limit = 10 } = request.query;
+      const offset = (page - 1) * limit;
 
-        const conditions = [];
-        if (status) {
-          conditions.push(eq(jammers.status, status));
-        }
-        if (model) {
-          conditions.push(like(jammers.model, `%${model}%`));
-        }
-        if (search) {
-          conditions.push(
-            or(
-              like(jammers.serialNumber, `%${search}%`),
-              like(jammers.model, `%${search}%`)
-            )
-          );
-        }
-
-        const queryBuilder = db
-          .select({
-            id: jammers.id,
-            serialNumber: jammers.serialNumber,
-            model: jammers.model,
-            status: jammers.status,
-            batteryLevel: jammers.batteryLevel,
-            currentLocationId: jammers.currentLocationId,
-            locationName: organizations.name,
-            lastMaintenance: jammers.lastMaintenance,
-            createdAt: jammers.createdAt,
-          })
-          .from(jammers)
-          .leftJoin(
-            organizations,
-            eq(jammers.currentLocationId, organizations.id)
-          );
-
-        const query = queryBuilder
-          .where(
-            conditions.length === 0
-              ? undefined!
-              : conditions.length === 1
-                ? conditions[0]
-                : and(...conditions)
-          )
-          .orderBy(desc(jammers.createdAt))
-          .limit(limit)
-          .offset(offset);
-
-        const results = await query;
-
-        // Get total count
-        const totalQuery = db.select({ count: count() }).from(jammers);
-        const [{ count: total }] = await totalQuery;
-
-        return {
-          data: results,
-          pagination: {
-            page,
-            limit,
-            total,
-            pages: Math.ceil(total / limit),
-          },
-        };
-      } catch (error) {
-        fastify.log.error(error);
-        return reply.code(500).send({ error: "Internal server error" });
+      const conditions = [];
+      if (status) {
+        conditions.push(eq(jammers.status, status));
       }
+      if (model) {
+        conditions.push(like(jammers.model, `%${model}%`));
+      }
+      if (search) {
+        conditions.push(or(like(jammers.serialNumber, `%${search}%`), like(jammers.model, `%${search}%`)));
+      }
+
+      const queryBuilder = db
+        .select({
+          id: jammers.id,
+          serialNumber: jammers.serialNumber,
+          model: jammers.model,
+          status: jammers.status,
+          currentLocationId: jammers.currentLocationId,
+          locationName: organizations.name,
+          lastMaintenance: jammers.lastMaintenance,
+          createdAt: jammers.createdAt,
+        })
+        .from(jammers)
+        .leftJoin(organizations, eq(jammers.currentLocationId, organizations.id));
+
+      const query = queryBuilder
+        .where(conditions.length === 0 ? undefined! : conditions.length === 1 ? conditions[0] : and(...conditions))
+        .orderBy(desc(jammers.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      const results = await query;
+
+      // Get total count
+      const totalQuery = await db.select({ count: count() }).from(jammers);
+      const total = totalQuery[0]!.count;
+
+      return {
+        data: results,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
     }
   );
 
   // Get jammer by ID
-  fastify.get("/:id", {}, async (request, reply) => {
-    try {
-      const { id } = request.params as { id: string };
+  fastify.withTypeProvider<ZodTypeProvider>().get(
+    "/:id",
+    {
+      schema: {
+        tags: ["Jammers"],
+        summary: "Get all jammer by id",
+        params: requestParam,
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
 
       const jammer = await db
         .select({
@@ -103,7 +97,6 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
           serialNumber: jammers.serialNumber,
           model: jammers.model,
           status: jammers.status,
-          batteryLevel: jammers.batteryLevel,
           currentLocationId: jammers.currentLocationId,
           locationName: organizations.name,
           lastMaintenance: jammers.lastMaintenance,
@@ -111,10 +104,7 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
           updatedAt: jammers.updatedAt,
         })
         .from(jammers)
-        .leftJoin(
-          organizations,
-          eq(jammers.currentLocationId, organizations.id)
-        )
+        .leftJoin(organizations, eq(jammers.currentLocationId, organizations.id))
         .where(eq(jammers.id, Number(id)))
         .limit(1);
 
@@ -123,78 +113,69 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
       }
 
       return jammer[0];
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
     }
-  });
+  );
 
   // Create jammer
-  fastify.post(
-    "/",
+  fastify.withTypeProvider<ZodTypeProvider>().post(
+    "",
     {
       schema: {
-        body: zodToJsonSchema(createJammerSchema),
+        tags: ["Jammers"],
+        summary: "Get all jammer by id",
+        body: createJammerSchema,
       },
     },
-    async (request: FastifyRequest<{ Body: JammerInput }>, reply) => {
-      try {
-        const jammerData = request.body;
+    async (request, reply) => {
+      const jammerData = request.body;
+      const newJammer = await db.insert(jammers).values({...jammerData,createdBy:request.jwtPayload.id}).returning();
 
-        const newJammer = await db
-          .insert(jammers)
-          .values(jammerData)
-          .returning();
-
-        return reply.code(201).send(newJammer[0]);
-      } catch (error: any) {
-        fastify.log.error(error);
-        if (error.code === "23505") {
-          // Unique constraint violation
-          return reply
-            .code(400)
-            .send({ error: "Serial number already exists" });
-        }
-        return reply.code(500).send({ error: "Internal server error" });
-      }
+      return reply.code(201).send(newJammer[0]);
     }
   );
 
   // Update jammer
-  fastify.put(
+  fastify.withTypeProvider<ZodTypeProvider>().put(
     "/:id",
     {
       schema: {
-        body: zodToJsonSchema(updateJammerSchema),
+        tags: ["Jammers"],
+        summary: "Update",
+        body: updateJammerSchema,
+        params: requestParam,
       },
     },
-    async (request: FastifyRequest<{ Body: JammerUpdate }>, reply) => {
-      try {
-        const { id } = request.params as { id: string };
-        const updateData = { ...request.body, updatedAt: new Date() };
+    async (request, reply) => {
+      const { id } = request.params;
+      const updateData = { ...request.body, updatedAt: new Date() };
 
-        const updatedJammer = await db
-          .update(jammers)
-          .set(updateData)
-          .where(eq(jammers.id, Number(id)))
-          .returning();
+      const updatedJammer = await db
+        .update(jammers)
+        .set({...updateData,createdBy:request.jwtPayload.id})
+        .where(eq(jammers.id, Number(id)))
+        .returning();
 
-        if (!updatedJammer.length) {
-          return reply.code(404).send({ error: "Jammer not found" });
-        }
-
-        return updatedJammer[0];
-      } catch (error) {
-        fastify.log.error(error);
-        return reply.code(500).send({ error: "Internal server error" });
+      if (!updatedJammer.length) {
+        return reply.code(404).send({ error: "Jammer not found" });
       }
+
+      return updatedJammer[0];
     }
   );
 
   // Delete jammer
-  fastify.delete("/:id", {}, async (request, reply) => {
-    try {
-      const { id } = request.params as { id: string };
+  fastify.withTypeProvider<ZodTypeProvider>().delete(
+    "/:id",
+    {
+      schema: {
+        tags: ["Jammers"],
+        summary: "delete jammer",
+        body: updateJammerSchema,
+        params: requestParam,
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
 
       const deletedJammer = await db
         .delete(jammers)
@@ -206,15 +187,19 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
       }
 
       return { message: "Jammer deleted successfully" };
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
     }
-  });
+  );
 
   // Get jammer statistics
-  fastify.get("/stats/overview", {}, async (request, reply) => {
-    try {
+  fastify.withTypeProvider<ZodTypeProvider>().get(
+    "/stats/overview",
+    {
+      schema: {
+        tags: ["Jammers"],
+        summary: "status jammer",
+      },
+    },
+    async () => {
       const stats = await db
         .select({
           status: jammers.status,
@@ -227,14 +212,14 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
 
       return {
         total: totalJammers,
-        byStatus: stats.reduce((acc, stat) => {
-          acc[stat.status] = stat.count;
-          return acc;
-        }, {} as Record<JammerStatus, number>),
+        byStatus: stats.reduce(
+          (acc, stat) => {
+            acc[stat.status] = stat.count;
+            return acc;
+          },
+          {} as Record<JammerStatus, number>
+        ),
       };
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
     }
-  });
+  );
 }

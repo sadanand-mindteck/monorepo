@@ -1,19 +1,17 @@
-import { db } from "../db/connection.js";
-import { examinations, examCenters, organizations, users } from "../db/schema.js";
+import { db } from "@jims/db/connection";
+import { examinations, examCenters, organizations, users } from "@jims/db/schema";
+import { eq, desc, like, or, count, and, sum } from "drizzle-orm";
+import { FastifyInstance } from "fastify";
 import {
   createExaminationSchema,
-  updateExaminationSchema,
-  createExamCenterSchema,
+  examinationSchemaUpdate,
   examinationQuerySchema,
-  examinationResponse,
-} from "../schemas/examination.js";
-import { zodToJsonSchema } from "zod-to-json-schema";
-import { eq, desc, like, or, count, and, sum } from "drizzle-orm";
-import { FastifyInstance, FastifyRequest } from "fastify";
-import { ExamCenterInput, ExaminationInput, ExaminationInputUpdate, ExaminationQuery } from "../types/examination.types.js";
+} from "@jims/types/examination";
+
+import { createExamCenterSchema } from "@jims/types/examCenter";
+import { requestParam } from "@jims/types/common";
 
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { requestParam } from "../schemas/common.js";
 
 export default async function examinationRoutes(fastify: FastifyInstance) {
   // Get all examinations
@@ -24,72 +22,70 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
         tags: ["Examinations"],
         summary: "Get all examinations",
         querystring: examinationQuerySchema,
-       
       },
     },
-    async (request ) => {
+    async (request) => {
+      // 1. Safely parse query parameters into numbers
+      const { search, status } = request.query;
+      const page = request.query.page ?? 1;
+      const limit = request.query.limit ?? 10;
+
+      const offset = (page - 1) * limit;
+
+      // 2. Build filter conditions first
+      const conditions = [];
+      if (search) {
+        conditions.push(or(like(examinations.name, `%${search}%`), like(examinations.examCode, `%${search}%`)));
+      }
+      if (status) {
+        conditions.push(eq(examinations.status, status));
+      }
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // 3. Build the data query and total count query using the same filters
+      const dataQuery = db
+        .select({
+          id: examinations.id,
+          name: examinations.name,
+          examCode: examinations.examCode,
+          examDate: examinations.examDate,
+          status: examinations.status,
+          totalCenters: examinations.totalCenters,
+          totalJammersRequired: examinations.totalJammersRequired,
+          createdBy: examinations.createdBy,
+          createdAt: examinations.createdAt,
+          creatorName: users.name,
+        })
+        .from(examinations)
+        .leftJoin(users, eq(examinations.createdBy, users.id))
+        .where(whereClause) // Apply filters BEFORE pagination
+        .orderBy(desc(examinations.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      const totalQuery = db.select({ count: count() }).from(examinations).where(whereClause); // Apply the same filters to the count
+
+      // 4. Execute queries concurrently for better performance
+      const [results, totalResult] = await Promise.all([dataQuery, totalQuery]);
+
+      const total = totalResult.at(1) || {count:0};
       
-        // 1. Safely parse query parameters into numbers
-        const { search, status } = request.query;
-        const page = request.query.page ?? 1;
-        const limit = request.query.limit ?? 10;
-        
-        const offset = (page - 1) * limit;
 
-        // 2. Build filter conditions first
-        const conditions = [];
-        if (search) {
-          conditions.push(or(like(examinations.name, `%${search}%`), like(examinations.examCode, `%${search}%`)));
-        }
-        if (status) {
-          conditions.push(eq(examinations.status, status));
-        }
-        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-        // 3. Build the data query and total count query using the same filters
-        const dataQuery = db
-          .select({
-            id: examinations.id,
-            name: examinations.name,
-            examCode: examinations.examCode,
-            examDate: examinations.examDate,
-            status: examinations.status,
-            totalCenters: examinations.totalCenters,
-            totalJammersRequired: examinations.totalJammersRequired,
-            createdBy: examinations.createdBy,
-            createdAt: examinations.createdAt,
-            creatorName: users.name,
-          })
-          .from(examinations)
-          .leftJoin(users, eq(examinations.createdBy, users.id))
-          .where(whereClause) // Apply filters BEFORE pagination
-          .orderBy(desc(examinations.createdAt))
-          .limit(limit)
-          .offset(offset);
-
-        const totalQuery = db.select({ count: count() }).from(examinations).where(whereClause); // Apply the same filters to the count
-
-        // 4. Execute queries concurrently for better performance
-        const [results, totalResult] = await Promise.all([dataQuery, totalQuery]);
-
-        const total = totalResult[0].count;
-
-        return {
-          data: results,
-          pagination: {
-            page,
-            limit,
-            total,
-            pages: Math.ceil(total / limit),
-          },
-        };
-     
+      return {
+        data: results,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total.count / limit),
+        },
+      };
     }
   );
 
   // Get examination by ID
   fastify.withTypeProvider<ZodTypeProvider>().get("/:id", { schema: { params: requestParam } }, async (request, reply) => {
-    try {
+  
       const { id } = request.params;
 
       const examination = await db
@@ -135,10 +131,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
         ...examination[0],
         centers,
       };
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.code(500).send({ error: "Internal server error" });
-    }
+   
   });
 
   // Create examination
@@ -150,7 +143,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      try {
+      
         const { name, examCode, examDate, status = "draft" } = request.body;
 
         const newExamination = await db
@@ -165,15 +158,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
           .returning();
 
         return reply.code(201).send(newExamination[0]);
-      } catch (error: any) {
-        fastify.log.error(error);
-        if (error.code === "23505") {
-          // Unique constraint violation
-          return reply.code(400).send({ error: "Exam code already exists" });
         }
-        return reply.code(500).send({ error: "Internal server error" });
-      }
-    }
   );
 
   // Update examination
@@ -181,15 +166,15 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
     "/:id",
     {
       schema: {
-        body: updateExaminationSchema,
+        body: examinationSchemaUpdate,
         params: requestParam,
       },
     },
 
     async (request, reply) => {
-      try {
+      
         const { id } = request.params;
-        const updateData = { ...request.body, updatedAt: new Date() };
+        const updateData = { ...request.body, updatedAt: new Date(), createdBy:request.jwtPayload.id };
 
         if (updateData.examDate) {
           updateData.examDate = new Date(updateData.examDate);
@@ -202,10 +187,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
         }
 
         return updatedExamination[0];
-      } catch (error) {
-        fastify.log.error(error);
-        return reply.code(500).send({ error: "Internal server error" });
-      }
+     
     }
   );
 
@@ -223,19 +205,25 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
   });
 
   // Create exam center
-  fastify.post(
+  fastify.withTypeProvider<ZodTypeProvider>().post(
     "/:id/centers",
     {
       schema: {
-        body: zodToJsonSchema(createExamCenterSchema),
+        body: createExamCenterSchema,
+        params: requestParam,
+        tags: ["Examinations"],
+        summary: "Create an exam center for an examination",
       },
     },
-    async (request: FastifyRequest<{ Body: ExamCenterInput }>, reply) => {
-      try {
-        const { id } = request.params as { id: string };
+    async (request, reply) => {
+      
+        const { id } = request.params;
         const centerData = {
           ...request.body,
-          examinationId: Number.parseInt(id),
+          examinationId: +id,
+          createdBy: request.jwtPayload.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         };
 
         const newCenter = await db.insert(examCenters).values(centerData).returning();
@@ -264,10 +252,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
           .where(eq(examinations.id, parseInt(id, 10)));
 
         return reply.code(201).send(newCenter[0]);
-      } catch (error) {
-        fastify.log.error(error);
-        return reply.code(500).send({ error: "Internal server error" });
-      }
+      
     }
   );
 }

@@ -1,9 +1,9 @@
 import speakeasy, { GeneratedSecret } from "speakeasy"
 import qrcode from "qrcode"
-import { db } from "../db/connection.js"
-import { mfaTokens, users } from "../db/schema.js"
+import { db } from "@jims/db/connection"
+import { mfaTokens, users } from "@jims/db/schema"
 import { eq, and, gt } from "drizzle-orm"
-import { emailService } from "./email.js"
+// import { emailService } from "./email.js"
 import { smsService } from "./sms.js"
 
 type MFAMethod = "email" | "sms" | "totp"
@@ -53,9 +53,10 @@ class MFAService {
         expiresAt,
       })
       let result
-      if (method === "email") {
-        result = await emailService.sendMFACode({email: userEmail, code, name: userName})
-      } else if (method === "sms") {
+      // if (method === "email") {
+      //   result = await emailService.sendMFACode({email: userEmail, code, name: userName})
+      // } else
+         if (method === "sms") {
         result = await smsService.sendMFACode(userPhone, code, userName)
       } else {
         result = { success: false, error: "Unsupported MFA method" }
@@ -81,12 +82,12 @@ class MFAService {
           .where(eq(users.id, userId))
           .limit(1)
 
-        if (!user.length || !user[0].mfaSecret) {
+        if (!user.length || !user[0]!.mfaSecret) {
           return { success: false, error: "TOTP not configured" }
         }
 
         const verified = speakeasy.totp.verify({
-          secret: user[0].mfaSecret,
+          secret: user[0]!.mfaSecret,
           encoding: "base32",
           token: code,
           window: 2,
@@ -112,7 +113,7 @@ class MFAService {
           return { success: false, error: "Invalid or expired code" }
         }
 
-        await db.update(mfaTokens).set({ used: true }).where(eq(mfaTokens.id, token[0].id))
+        await db.update(mfaTokens).set({ used: true }).where(eq(mfaTokens.id, token[0]!.id))
         return { success: true }
       }
     } catch (error: any) {

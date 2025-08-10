@@ -1,5 +1,5 @@
+import { AccessTokenPayload } from "@jims/types/auth";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { AccessTokenPayload } from "../types/fastify";
 
 const tokenBlacklist: Map<string, number> = new Map();
 const cleanupBlacklist = () => {
@@ -37,7 +37,7 @@ export const authenticate = async (
     }
 
     const decoded = await request.jwtVerify<AccessTokenPayload>();
-    request.jwtPayload = decoded as AccessTokenPayload;
+    request.jwtPayload = decoded
   } catch (error) {
     reply.status(401).send({ message: "Unauthorized" });
   }

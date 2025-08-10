@@ -3,24 +3,30 @@ import { organizations } from "@jims/db";
 import { z } from "zod";
 import { pagination, querySchema } from "./common";
 
-export const organizationSchema = createSelectSchema(organizations);
+export const organizationSchema = createSelectSchema(organizations, {
+  id: z.number().int().positive(),
+  name: z.string().min(1, "Organization name is required"),
+  address: z.string().min(1, "Address is required").optional(),
+  contactPhone: z.string().min(1, "Contact number is required").optional(),
+  contactEmail: z.email("Invalid email format").optional(),
+  isActive: z.boolean().default(true),
+  capacity: z.number().int().positive(),
+}).omit({ updatedAt: true, createdAt: true });
 export const createOrganizationSchema = organizationSchema.omit({
-  updatedAt: true,
-  createdAt: true,
   id: true,
   isActive: true,
 });
 export const updateOrganizationSchema = organizationSchema.partial();
 export const organizationResponse = z.object({
-  data: organizationSchema.omit({ createdAt: true, updatedAt: true }).array(),
+  data: organizationSchema.array(),
   pagination,
 });
 export const organizationQuerySchema = querySchema.extend({
-  type: organizationSchema.pick({ type: true }).optional(),
+  type: organizationSchema.shape.type.optional(),
 });
 
 export type Organization = z.infer<typeof organizationSchema>;
 export type OrganizationInput = z.infer<typeof createOrganizationSchema>;
-export type UpdateOrganizationInput = z.infer<typeof updateOrganizationSchema>;
+export type OrganizationInputUpdate = z.infer<typeof updateOrganizationSchema>;
 export type OrganizationResponse = z.infer<typeof organizationResponse>;
 export type OrganizationQuery = z.infer<typeof organizationQuerySchema>;

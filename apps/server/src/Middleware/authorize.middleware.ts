@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { AccessTokenPayload } from "../types/fastify";
-import { userRoleEnum } from "../db/schema";
+import { UserRole } from "@jims/types/user";
+import { AccessTokenPayload } from "@jims/types/auth";
 
-export const authorize = (roles: Array<(typeof userRoleEnum.enumValues)[number]>) => {
+export const authorize = (roles: UserRole[]) => {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const user = await request.jwtVerify<AccessTokenPayload>();

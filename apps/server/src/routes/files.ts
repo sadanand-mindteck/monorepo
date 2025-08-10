@@ -1,105 +1,71 @@
-import { fileService } from "../services/file.js"
-import { db } from "../db/connection.js"
-import { files } from "../db/schema.js"
-import { eq, desc, and, count } from "drizzle-orm"
-import fs from "fs"
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
-import { MultipartFile } from "@fastify/multipart"
-import { EntityParams, GetFilesQuery } from "../types/files.types.js"
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { ZodTypeProvider } from "fastify-type-provider-zod";
+import { eq, desc, and, count } from "drizzle-orm";
+import { MultipartFile } from "@fastify/multipart";
+import fs from "fs";
 
-
-interface IdParams {
-  id: string
-}
-
-
-
-// --- Route Definitions ---
+import { files } from "@jims/db/schema";
+import { db } from "@jims/db/connection";
+import { requestParam, requestParamEntity } from "@jims/types/common";
+import { fileQuerySchema } from "@jims/types/file";
+import { fileService } from "../services/file.js";
 
 export default async function fileRoutes(fastify: FastifyInstance) {
   // Upload file
-  fastify.post(
+  fastify.withTypeProvider<ZodTypeProvider>().post(
     "/upload",
     {
       schema: {
         tags: ["Files"],
         summary: "Upload a file",
         consumes: ["multipart/form-data"],
-        querystring: {
-          type: "object",
-          properties: {
-            entityType: { type: "string" },
-            entityId: { type: "string" },
-          },
-        },
-        security: [{ Bearer: [] }],
-        // Response schema remains the same
+        querystring: requestParamEntity
       },
     },
-    async (request: FastifyRequest<{ Querystring: { entityType?: string; entityId?: string } }>, reply) => {
-      try {
-        const data: MultipartFile | undefined = await request.file()
+    async (request, reply) => {
+      
+        const data: MultipartFile | undefined = await request.file();
         if (!data) {
-          return reply.code(400).send({ error: "No file uploaded" })
+          return reply.code(400).send({ error: "No file uploaded" });
         }
 
-        const { entityType, entityId } = request.query
+        const { entityType } = request.query;
 
-        const result = await fileService.saveFile(
-          data,
-          request.jwtPayload.id,
-          entityType,
-          entityId ? parseInt(entityId, 10) : undefined,
-        )
+        const result = await fileService.saveFile(data, request.jwtPayload.id, entityType);
 
         if (!result.success) {
-          return reply.code(400).send({ error: result.error || "File upload failed", errors: result.errors })
+          return reply.code(400).send({ error: result.error || "File upload failed", errors: result.errors });
         }
 
-        return result
-      } catch (error) {
-        fastify.log.error(error)
-        return reply.code(500).send({ error: "Internal Server Error" })
-      }
-    },
-  )
+        return result;
+     
+    }
+  );
 
   // Upload multiple files
-  fastify.post(
+  fastify.withTypeProvider<ZodTypeProvider>().post(
     "/upload-multiple",
     {
       schema: {
         tags: ["Files"],
         summary: "Upload multiple files",
         consumes: ["multipart/form-data"],
-        querystring: {
-          type: "object",
-          properties: {
-            entityType: { type: "string" },
-            entityId: { type: "string" },
-          },
-        },
-        security: [{ Bearer: [] }],
+        querystring: requestParamEntity,
       },
     },
-    async (request: FastifyRequest<{ Querystring: { entityType?: string; entityId?: string } }>, reply) => {
-      try {
-        const parts = request.files()
-        const results = []
-        const { entityType, entityId } = request.query
+    async (request, reply) => {
+      
+        const parts = request.files();
+        const results = [];
+        const { entityType, id } = request.query;
 
         for await (const part of parts) {
-          const result = await fileService.saveFile(
-            part,
-            request.jwtPayload.id,
-            entityType,
-            entityId ? parseInt(entityId, 10) : undefined,
-          )
-          results.push(result)
+          const result = await fileService.saveFile(part, request.jwtPayload.id, entityType);
+          results.push(result);
         }
 
-        const successful = results.filter((r) => r.success)
-        const failed = results.filter((r) => !r.success)
+        const successful = results.filter((r) => r.success);
+        const failed = results.filter((r) => !r.success);
 
         return {
           success: failed.length === 0,
@@ -107,172 +73,141 @@ export default async function fileRoutes(fastify: FastifyInstance) {
           failed: failed.length,
           files: successful.map((r) => r.file),
           errors: failed.map((r) => r.error),
-        }
-      } catch (error) {
-        fastify.log.error(error)
-        return reply.code(500).send({ error: "Internal Server Error" })
-      }
-    },
-  )
+        };
+      
+    }
+  );
 
   // Get file by ID or Download file
-  const getFileHandler =
-    (disposition: "inline" | "attachment") =>
-    async (request: FastifyRequest<{ Params: IdParams }>, reply :FastifyReply) => {
-      try {
-        const fileId = parseInt(request.params.id, 10)
-        if (isNaN(fileId)) {
-          return reply.code(400).send({ error: "Invalid file ID" })
-        }
-        const result = await fileService.getFile(fileId)
+  const getFileHandler = (disposition: "inline" | "attachment") => async (request: FastifyRequest, reply: FastifyReply) => {
+    const fileId = (request.params as { id: number }).id;
+    if (isNaN(fileId)) {
+      return reply.code(400).send({ error: "Invalid file ID" });
+    }
+    const result = await fileService.getFile(fileId);
 
-        if (!result.success || !result.path || !result.file) {
-          return reply.code(404).send({ error: "File not found" })
-        }
-
-        const stream = fs.createReadStream(result.path)
-        reply.type(result.file.mimeType)
-        reply.header("Content-Disposition", `${disposition}; filename="${result.file.originalName}"`)
-        return reply.send(stream)
-      } catch (error) {
-        fastify.log.error(error)
-        return reply.code(500).send({ error: "Internal Server Error" })
-      }
+    if (!result.success || !result.path || !result.file) {
+      return reply.code(404).send({ error: "File not found" });
     }
 
-  fastify.get<{ Params: IdParams }>(
+    const stream = fs.createReadStream(result.path);
+    reply.type(result.file.mimeType);
+    reply.header("Content-Disposition", `${disposition}; filename="${result.file.originalName}"`);
+    return reply.send(stream);
+  };
+
+  fastify.withTypeProvider<ZodTypeProvider>().get(
     "/:id",
     {
       schema: {
         tags: ["Files"],
         summary: "Get file by ID",
-        params: { type: "object", properties: { id: { type: "string" } } },
-        security: [{ Bearer: [] }],
+        params: requestParam,
       },
     },
-    getFileHandler("inline"),
-  )
+    getFileHandler("inline")
+  );
 
-  fastify.get<{ Params: IdParams }>(
+  fastify.withTypeProvider<ZodTypeProvider>().get(
     "/:id/download",
     {
       schema: {
         tags: ["Files"],
         summary: "Download file",
-        params: { type: "object", properties: { id: { type: "string" } } },
-        security: [{ Bearer: [] }],
       },
     },
-    getFileHandler("attachment"),
-  )
+    getFileHandler("attachment")
+  );
 
   // Get files list
-  fastify.get<{ Querystring: GetFilesQuery }>(
+  fastify.withTypeProvider<ZodTypeProvider>().get(
     "/",
     {
       schema: {
         tags: ["Files"],
         summary: "Get files list",
-        querystring: {
-          /* schema defined in handler */
-        },
-        security: [{ Bearer: [] }],
+        querystring: fileQuerySchema,
       },
     },
-    async (request, reply) => {
-      try {
-        const { entityType, entityId, type } = request.query 
-        const page = parseInt(request.query.page || "1", 10)
-        const limit = parseInt(request.query.limit || "10", 10)
-        const offset = (page - 1) * limit
+    async (request) => {
+      const { entityType, id, type, page = 1, limit = 10 } = request.query;
 
-        const conditions = []
-        if (entityType) conditions.push(eq(files.entityType, entityType))
-        if (entityId) conditions.push(eq(files.entityId, parseInt(entityId, 10)))
-        if (type) conditions.push(eq(files.type, type))
-        const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+      const offset = (page - 1) * limit;
 
-        const dataQuery = db.select().from(files).where(whereClause).orderBy(desc(files.createdAt)).limit(limit).offset(offset)
+      const conditions = [];
+      if (entityType) conditions.push(eq(files.entityType, entityType));
+      if (id) conditions.push(eq(files.id, +id));
+      if (type) conditions.push(eq(files.type, type));
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-        // For production, you must run the count query separately without limit/offset
-        const totalQuery = db.select({ value: count() }).from(files).where(whereClause)
+      const dataQuery = db.select().from(files).where(whereClause).orderBy(desc(files.createdAt)).limit(limit).offset(offset);
 
-        const [results, totalResult] = await Promise.all([dataQuery, totalQuery])
-        const total = totalResult[0].value
+      // For production, you must run the count query separately without limit/offset
+      const totalQuery = db.select({ value: count() }).from(files).where(whereClause);
 
-        const filesWithUrls = results.map((file) => ({
-          ...file,
-          url: `/api/files/${file.id}`,
-          downloadUrl: `/api/files/${file.id}/download`,
-        }))
+      const [results, totalResult] = await Promise.all([dataQuery, totalQuery]);
+      const total = totalResult[0];
 
-        return {
-          data: filesWithUrls,
-          pagination: { page, limit, total },
-        }
-      } catch (error) {
-        fastify.log.error(error)
-        return reply.code(500).send({ error: "Internal Server Error" })
-      }
-    },
-  )
+      const filesWithUrls = results.map((file) => ({
+        ...file,
+        url: `/api/files/${file.id}`,
+        downloadUrl: `/api/files/${file.id}/download`,
+      }));
+
+      return {
+        data: filesWithUrls,
+        pagination: { page, limit, total : total ? total.value : 0 },
+      };
+    }
+  );
 
   // Delete file
-  fastify.delete<{ Params: IdParams }>(
+  fastify.withTypeProvider<ZodTypeProvider>().delete(
     "/:id",
     {
       schema: {
         tags: ["Files"],
         summary: "Delete file",
-        params: { type: "object", properties: { id: { type: "string" } } },
-        security: [{ Bearer: [] }],
+        params: requestParam,
       },
     },
     async (request, reply) => {
-      try {
-        const fileId = parseInt(request.params.id, 10)
-        const result = await fileService.deleteFile(fileId, request.jwtPayload.id)
+      const fileId = request.params.id;
+      const result = await fileService.deleteFile(+fileId, request.jwtPayload.id);
 
-        if (!result.success) {
-          return reply.code(404).send({ error: result.error })
-        }
-
-        return { success: true, message: "File deleted successfully" }
-      } catch (error) {
-        fastify.log.error(error)
-        return reply.code(500).send({ error: "Internal Server Error" })
+      if (!result.success) {
+        return reply.code(404).send({ error: result.error });
       }
-    },
-  )
+
+      return { success: true, message: "File deleted successfully" };
+    }
+  );
 
   // Get files by entity
-  fastify.get<{ Params: EntityParams }>(
-    "/entity/:entityType/:entityId",
+  fastify.withTypeProvider<ZodTypeProvider>().get(
+    "/entity/:entityType/:id",
     {
       schema: {
         tags: ["Files"],
         summary: "Get files by entity",
-        params: {
-          /* schema defined in handler */
-        },
-        security: [{ Bearer: [] }],
+        params: requestParamEntity,
       },
     },
     async (request, reply) => {
       try {
-        const { entityType } = request.params
-        const entityId = parseInt(request.params.entityId, 10)
-        const result = await fileService.getFilesByEntity(entityType, entityId)
+        const { entityType, id } = request.params;
+
+        const result = await fileService.getFilesByEntity(entityType, +id);
 
         if (!result.success) {
-          return reply.code(500).send({ error: result.error })
+          return reply.code(500).send({ error: result.error });
         }
 
-        return result.files
+        return result.files;
       } catch (error) {
-        fastify.log.error(error)
-        return reply.code(500).send({ error: "Internal Server Error" })
+        fastify.log.error(error);
+        return reply.code(500).send({ error: "Internal Server Error" });
       }
-    },
-  )
+    }
+  );
 }

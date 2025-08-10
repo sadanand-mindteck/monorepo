@@ -1,11 +1,13 @@
+import { eq, and } from "drizzle-orm"
+import mime from "mime-types"
 import fs from "fs/promises"
+import sharp from "sharp"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
-import sharp from "sharp"
-import mime from "mime-types"
-import { db } from "../db/connection.js"
-import { files } from "../db/schema.js"
-import { eq, and } from "drizzle-orm"
+
+import { db } from "@jims/db/connection"
+import { files } from "@jims/db/schema"
+import { EntityType } from "@jims/types/file"
 
 interface UploadedFile {
   file: { bytesRead: number }
@@ -86,7 +88,7 @@ class FileService {
     return `/api/files/${fileId}`
   }
 
-  async saveFile(file: UploadedFile, userId: number, entityType: string | null = null, entityId: number | null = null) {
+  async saveFile(file: UploadedFile, userId: number, entityType: EntityType) {
     try {
       const validationErrors = this.validateFile(file)
       if (validationErrors.length > 0) {
@@ -119,14 +121,13 @@ class FileService {
           type: fileType as "image" | "document" | "certificate" | "report",
           uploadedBy: userId,
           entityType,
-          entityId,
         })
         .returning()
 
       return {
         success: true,
         file: fileRecord[0],
-        url: this.getPublicURL(fileRecord[0].id),
+        url: this.getPublicURL(fileRecord[0]!.id),
       }
     } catch (error: any) {
       console.error("File save failed:", error)
@@ -142,7 +143,7 @@ class FileService {
         return { success: false, error: "File not found" }
       }
 
-      const fullPath = path.join(this.uploadPath, fileRecord[0].path)
+      const fullPath = path.join(this.uploadPath, fileRecord[0]!.path)
 
       try {
         await fs.access(fullPath)
@@ -168,7 +169,7 @@ class FileService {
         return { success: false, error: "File not found" }
       }
 
-      const fullPath = path.join(this.uploadPath, fileRecord[0].path)
+      const fullPath = path.join(this.uploadPath, fileRecord[0]!.path)
 
       try {
         await fs.unlink(fullPath)
@@ -185,12 +186,12 @@ class FileService {
     }
   }
 
-  async getFilesByEntity(entityType: string, entityId: number) {
+  async getFilesByEntity(entityType: EntityType, id:number) {
     try {
       const fileRecords = await db
         .select()
         .from(files)
-        .where(and(eq(files.entityType, entityType), eq(files.entityId, entityId)))
+        .where(and(eq(files.entityType, entityType), eq(files.id, id)))
 
       return {
         success: true,

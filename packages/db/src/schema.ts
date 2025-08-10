@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, timestamp, integer, boolean, decimal, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, text, timestamp, integer, boolean, decimal, pgEnum, AnyPgColumn, date } from "drizzle-orm/pg-core"
 
 // Enums
 const userRoleEnum = pgEnum("user_role", ["admin", "warehouse", "operator"])
@@ -8,10 +8,12 @@ const examStatusEnum = pgEnum("exam_status", ["draft", "planning", "active", "co
 const organizationTypeEnum = pgEnum("organization_type", ["warehouse", "installation_agency"])
 const mfaMethodEnum = pgEnum("mfa_method", ["email", "sms", "totp"])
 const fileTypeEnum = pgEnum("file_type", ["image", "document", "certificate", "report"])
-
+const taskTypeEnum =pgEnum("task_type", ["attendance", "receive", "install", "power_on", "upload_cert", "power_off"])
+const installationTaskStatusEnum = pgEnum("installation_task_status", ["pending", "completed"])
+const entityTypeEnum = pgEnum("entityType",["jammer", "shipment", "installation"])
 // Users table
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: serial("id").primaryKey().notNull().unique(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: varchar("password", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -19,12 +21,13 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull(),
   organizationId: integer("organization_id").references(() => organizations.id),
   isActive: boolean("is_active").default(true),
-  emailVerified: boolean("email_verified").default(false),
-  phoneVerified: boolean("phone_verified").default(false),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  phoneVerified: boolean("phone_verified").default(false).notNull(),
   mfaEnabled: boolean("mfa_enabled").default(false),
   mfaMethod: mfaMethodEnum("mfa_method"),
   mfaSecret: varchar("mfa_secret", { length: 255 }),
   lastLogin: timestamp("last_login"),
+  createdBy: integer("created_by").references(():any=> users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
@@ -45,10 +48,10 @@ export const organizations = pgTable("organizations", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   type: organizationTypeEnum("type").notNull(),
-  location: varchar("location", { length: 255 }),
+  address: varchar("location", { length: 255 }),
   contactEmail: varchar("contact_email", { length: 255 }),
   contactPhone: varchar("contact_phone", { length: 20 }),
-  capacity: varchar("capacity", { length: 100 }),
+  capacity: integer("capacity").notNull(),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -70,17 +73,17 @@ export const examinations = pgTable("examinations", {
 
 // Exam Centers table
 export const examCenters = pgTable("exam_centers", {
-  id: serial("id").primaryKey(),
+  id: serial("id").primaryKey().unique(),
   examinationId: integer("examination_id").references(() => examinations.id),
   name: varchar("name", { length: 255 }).notNull(),
   address: text("address").notNull(),
-  latitude: decimal("latitude", { precision: 10, scale: 8 }),
-  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  latitude: integer("latitude").notNull(),
+  longitude: integer("longitude").notNull(),
   jammersRequired: integer("jammers_required").notNull(),
   assignedAgencyId: integer("assigned_agency_id").references(() => organizations.id),
   assignedOperatorId: integer("assigned_operator_id").references(() => users.id),
-  reportingTime: varchar("reporting_time", { length: 10 }),
-  examStartTime: varchar("exam_start_time", { length: 10 }),
+  reportingTime: timestamp("reporting_time").notNull(),
+  examStartTime: timestamp("exam_start_time").notNull(),
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -130,8 +133,8 @@ export const installationTasks = pgTable("installation_tasks", {
   id: serial("id").primaryKey(),
   centerId: integer("center_id").references(() => examCenters.id),
   operatorId: integer("operator_id").references(() => users.id),
-  taskType: varchar("task_type", { length: 50 }).notNull(), // attendance, receive, install, power_on, upload_cert, power_off
-  status: varchar("status", { length: 20 }).default("pending"), // pending, completed
+  taskType: taskTypeEnum().notNull(), // attendance, receive, install, power_on, upload_cert, power_off
+  status: installationTaskStatusEnum().notNull().default("pending"), // pending, completed
   completedAt: timestamp("completed_at"),
   gpsLatitude: decimal("gps_latitude", { precision: 10, scale: 8 }),
   gpsLongitude: decimal("gps_longitude", { precision: 11, scale: 8 }),
@@ -151,8 +154,7 @@ export const files = pgTable("files", {
   path: varchar("path", { length: 500 }).notNull(),
   type: fileTypeEnum("type").notNull(),
   uploadedBy: integer("uploaded_by").references(() => users.id),
-  entityType: varchar("entity_type", { length: 50 }), // jammer, shipment, installation, etc.
-  entityId: integer("entity_id"),
+  entityType: entityTypeEnum().notNull(), // jammer, shipment, installation, etc.
   createdAt: timestamp("created_at").defaultNow(),
 })
 
