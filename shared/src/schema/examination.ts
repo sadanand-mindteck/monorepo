@@ -4,6 +4,7 @@ import { z } from "zod";
 import { pagination, querySchema } from "./common.js";
 
 export const examinationSchema = createSelectSchema(examinations,{
+  examDate:z.string(),
   name:z.string(),
   examCode:z.string(),
   id:z.number().int().positive(),
@@ -18,7 +19,7 @@ export const createExaminationSchema = examinationSchema.omit({
   createdAt: true,
   updatedAt: true,
 });
-export const examinationSchemaUpdate = createExaminationSchema.partial();
+export const examinationSchemaUpdate = createExaminationSchema;
 export const examinationResponse = z.object({
   data: examinationSchema.omit({ createdAt: true, updatedAt: true }).array(),
   pagination,

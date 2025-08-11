@@ -1,38 +1,23 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { RHFInput } from "@/components/rhf/rhf-input";
 import { FormProvider, useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import * as yup from "yup";
 import { login } from "@/lib/api/auth";
 import { useMutation } from "@tanstack/react-query";
-import { UserRoleEnum } from "@/types";
-
-export const registerSchema = yup.object().shape({
-  email: yup.string().email("Invalid email").required("Email is required"),
-  password: yup
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .required("password is required"),
-});
-
-export type RegisterFormValues = yup.InferType<typeof registerSchema>;
+import { UserRole } from "@jims/shared/schema/user";
+import { RegisterInput, registerSchema } from "@jims/shared/schema";
 
 export default function LoginPage() {
   const router = useRouter();
-  const methods = useForm<RegisterFormValues>({
-    resolver: yupResolver(registerSchema),
+  const methods = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -40,18 +25,18 @@ export default function LoginPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: RegisterFormValues) => login(data),
-    onSuccess: (response) => {
-      handleLogin(response.data.user.role);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      localStorage.setItem("token", JSON.stringify(response.data.token));
+    mutationFn: (data: RegisterInput) => login(data),
+    onSuccess: (data) => {
+      handleLogin(data.user.role);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", JSON.stringify(data.token));
     },
     onError: (error) => {
       console.error("Login failed ❌", error);
     },
   });
 
-  const handleLogin = (role: UserRoleEnum) => {
+  const handleLogin = (role: UserRole) => {
     // Redirect based on role
     switch (role) {
       case "admin":
@@ -78,23 +63,11 @@ export default function LoginPage() {
               <Shield className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold">JIMS Login</CardTitle>
-            <CardDescription>
-              Jammer Installation Management System
-            </CardDescription>
+            <CardDescription>Jammer Installation Management System</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <RHFInput
-              name="email"
-              label="Email"
-              type="email"
-              placeholder="Enter your email"
-            />
-            <RHFInput
-              name="password"
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-            />
+            <RHFInput name="email" label="Email" type="email" placeholder="Enter your email" />
+            <RHFInput name="password" label="Password" type="password" placeholder="Enter your password" />
 
             <Button type="submit" className="w-full" size="lg">
               Sign In
@@ -108,9 +81,7 @@ export default function LoginPage() {
               <p>
                 <strong>Password:</strong> password123
               </p>
-              <p className="text-gray-600 mt-2">
-                Select any role to explore the system
-              </p>
+              <p className="text-gray-600 mt-2">Select any role to explore the system</p>
             </div>
           </CardContent>
         </Card>

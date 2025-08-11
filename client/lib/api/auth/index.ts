@@ -1,10 +1,9 @@
-import { AccessTokenPayload, loginResponse,  } from "@/types"
+import { AccessTokenPayload, LoginInput,LoginResponse,RegisterInput  } from "@jims/shared/schema/auth"
 import axiosInstance from ".."
-import { RegisterFormValues } from "@/app/page"
 
-async function login(payload:RegisterFormValues){
-    return  await axiosInstance.post<loginResponse>("/auth/login",payload)
-
+async function login(payload:RegisterInput){
+    const {data} =  await axiosInstance.post<LoginResponse>("/auth/login",payload)
+    return data;
 }
 
 export {login}

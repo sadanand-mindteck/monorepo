@@ -68,6 +68,11 @@ export const accessTokenPayload = userSchema.pick({
   iat: z.number(),
   exp: z.number(), 
 })
+export const loginResponse = z.object({
+  token:z.string(),
+  requiresMFA:z.boolean(),
+  user: userSchema
+})
 
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -79,3 +84,4 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type AccessTokenPayload = z.infer<typeof accessTokenPayload>;
+export type LoginResponse = z.infer<typeof loginResponse>

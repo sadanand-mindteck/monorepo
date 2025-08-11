@@ -174,11 +174,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       
         const { id } = request.params;
-        const updateData = { ...request.body, updatedAt: new Date(), createdBy:request.jwtPayload.id };
-
-        if (updateData.examDate) {
-          updateData.examDate = new Date(updateData.examDate);
-        }
+        const updateData = { ...request.body, updatedAt: new Date(), createdBy:request.jwtPayload.id, examDate : new Date(request.body.examDate) };
 
         const updatedExamination = await db.update(examinations).set(updateData).where(eq(examinations.id, +id)).returning();
 

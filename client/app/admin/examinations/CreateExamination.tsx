@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useForm, FormProvider, Controller } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import * as yup from "yup";
 import { RHFInput } from "@/components/rhf/rhf-input";
@@ -19,21 +19,13 @@ import { useMutation } from "@tanstack/react-query";
 import { createExamination, updateExamination } from "@/lib/api/examination";
 import { Dispatch, SetStateAction, use, useEffect, useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import { ExaminationResponse } from "@/types";
+import { ExaminationResponse,ExamCenterInput, ExaminationInput, createExaminationSchema, Examination } from "@jims/shared/schema/index";
 import { getISTDateTimeLocal } from "@/utils/date-helper";
 
-const examinationSchema = yup.object({
-  name: yup.string().required("Exam name is required"),
-  examCode: yup.string().required("Exam code is required"),
-  examDate: yup.string().required("Exam date is required").nullable(),
-  status: yup
-    .mixed<"draft" | "planning" | "active" | "completed" | "cancelled">()
-    .oneOf(["draft", "planning", "active", "completed", "cancelled"])
-    .required("Status is required"),
-});
 
-export type ExaminationFormValues = yup.InferType<typeof examinationSchema>;
-const defaultValues: ExaminationFormValues = {
+
+
+const defaultValues: ExaminationInput = {
   name: "",
   examCode: "",
   examDate: getISTDateTimeLocal(), // Default to current date and time
@@ -47,17 +39,17 @@ export function CreateExamination({
   setOpen,
 }: {
   refetchExaminations: () => void;
-  selectedExamination?: ExaminationResponse | null;
+  selectedExamination?: Examination | null;
   setSelectedExamination: Dispatch<SetStateAction<ExaminationResponse | null>>;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
-  const methods = useForm<ExaminationFormValues>({
-    resolver: yupResolver(examinationSchema),
+  const methods = useForm<ExaminationInput>({
+    resolver: zodResolver(createExaminationSchema),
     defaultValues,
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: ExaminationFormValues) => {
+    mutationFn: async (data: ExaminationInput) => {
       if (selectedExamination?.id) {
         return await updateExamination(selectedExamination.id, data);
       } else {
@@ -65,11 +57,7 @@ export function CreateExamination({
       }
     },
     onSuccess: (response) => {
-      toast({
-        title: response.id
-          ? "Examination updated successfully"
-          : "Examination created successfully",
-      });
+      toast({title:"saved successfully"});
       refetchExaminations();
       methods.reset();
       setOpen(false);
@@ -81,7 +69,7 @@ export function CreateExamination({
     },
   });
 
-  const onSubmit = (data: ExaminationFormValues) => {
+  const onSubmit = (data: ExaminationInput) => {
     mutation.mutate(data);
   };
 

@@ -1,14 +1,14 @@
 import {
+  Examination,
   ExaminationResponse,
-  ExaminationResponseWithPagination,
-} from "@/types";
+} from "@jims/shared/schema/examination";
 import axiosInstance from "..";
-import { ExaminationFormValues } from "@/app/admin/examinations/CreateExamination";
+import { ExaminationInput } from "@jims/shared/schema";
 
 async function getExaminations() {
   const {
     data: { data },
-  } = await axiosInstance<ExaminationResponseWithPagination>("/examinations");
+  } = await axiosInstance<ExaminationResponse>("/examinations");
   return data;
 }
 
@@ -17,16 +17,16 @@ async function deleteExamination(id: string) {
   return data;
 }
 
-async function createExamination(req: ExaminationFormValues) {
-  const { data } = await axiosInstance.post<ExaminationResponse>(
+async function createExamination(req: ExaminationInput) {
+  const { data } = await axiosInstance.post<Examination>(
     "/examinations",
     req
   );
   return data;
 }
 
-async function updateExamination(id: string, req: ExaminationFormValues) {
-  const { data } = await axiosInstance.put<ExaminationResponse>(
+async function updateExamination(id: number, req: ExaminationInput) {
+  const { data } = await axiosInstance.put<Examination>(
     "/examinations/" + id,
     req
   );
