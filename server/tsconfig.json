@@ -1,17 +1,22 @@
 {
-  "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "strictNullChecks": true,
+    "sourceMap": false,
     "module": "es2022",
     "moduleResolution": "bundler",
     "target": "es2022",
     "lib": ["es2022", "dom"],
     "strict": true,
-    "esModuleInterop": true
-    
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["../shared/*"]
+    }
   },
-  
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
