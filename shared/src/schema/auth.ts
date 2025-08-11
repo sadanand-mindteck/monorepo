@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { createSelectSchema } from "drizzle-zod";
-import { users } from "@jims/db";
+import { users } from "../db/schema.js";
 
-export const userSchema = createSelectSchema(users, {
+const userSchema = createSelectSchema(users, {
   id: z.number().int().positive(),
   email: z.email("Invalid email format").min(1, "Email is required"),
   name: z.string().min(1, "Name is required"),

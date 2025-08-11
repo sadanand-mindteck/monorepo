@@ -1,7 +1,7 @@
 import { createSelectSchema } from "drizzle-zod";
-import { organizations } from "@jims/db";
+import { organizations } from "../db/schema.js";
 import { z } from "zod";
-import { pagination, querySchema } from "./common";
+import { pagination, querySchema } from "./common.js";
 
 export const organizationSchema = createSelectSchema(organizations, {
   id: z.number().int().positive(),

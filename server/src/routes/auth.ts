@@ -1,14 +1,12 @@
 import bcrypt from "bcryptjs";
-import { db } from "@jims/db/connection";
-import { users, organizations } from "@jims/db/schema";
+import { db } from "@jims/shared/db/connection.js";
+import {users, organizations } from "@jims/shared/db/schema.js"
 import {
   registerSchema,
   changePasswordSchema,
-   
   LoginInput,
   loginSchema,
-
-} from "@jims/types/auth";
+} from "@jims/shared/schema/auth.js";
 import { eq } from "drizzle-orm";
 // import { mfaService } from "../services/mfa.js";
 // import { emailService } from "../services/email.js";
@@ -163,6 +161,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
       
         const { email, password, name, phone, role, organizationId } =
           request.body;
+          const a = users.email;
+
 
         // Check if user already exists
         const existingUser = await db

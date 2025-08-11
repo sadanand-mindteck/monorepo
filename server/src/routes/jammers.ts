@@ -1,5 +1,5 @@
-import { db } from "@jims/db/connection";
-import { jammers, organizations } from "@jims/db/schema";
+import { db } from "@jims/shared/db/connection.js";
+import { jammers, organizations } from "@jims/shared/db/schema.js";
 import {
   createJammerSchema,
   updateJammerSchema,
@@ -8,11 +8,11 @@ import {
   JammerStatus,
   JammerInputUpdate,
   jammerQuerySchema,
-} from "@jims/types/jammer";
+} from "@jims/shared/schema/jammer.js";
 import { eq, desc, like, or, count, and } from "drizzle-orm";
 import { FastifyInstance, FastifyRequest } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { requestParam } from "@jims/types/common";
+import { requestParam } from "@jims/shared/schema/common.js";
 
 export default async function jammerRoutes(fastify: FastifyInstance) {
   // Get all jammers

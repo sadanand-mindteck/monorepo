@@ -1,7 +1,7 @@
-import {shipmentItems} from "@jims/db"
+import {shipmentItems} from "../db/schema.js"
 import {z} from "zod"
 import { createSelectSchema } from "drizzle-zod"
-import {pagination, querySchema} from "./common"
+import {pagination, querySchema} from "./common.js"
 
 export const shipmentSchema = createSelectSchema(shipmentItems,{
     id: z.number().int().positive(),

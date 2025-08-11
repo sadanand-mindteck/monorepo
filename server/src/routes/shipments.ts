@@ -1,9 +1,9 @@
-import { db } from "@jims/db/connection";
-import { shipments, shipmentItems, jammers, organizations } from "@jims/db/schema";
-import { createShipmentSchema, updateShipmentSchema, shipmentQuerySchema } from "@jims/types/shipment";
+import { db } from "@jims/shared/db/connection.js";
+import { shipments, shipmentItems, jammers, organizations } from "@jims/shared/db/schema.js";
+import { createShipmentSchema, updateShipmentSchema, shipmentQuerySchema } from "@jims/shared/schema/shipment.js";
 import { eq, desc, count, inArray } from "drizzle-orm";
 import { FastifyInstance } from "fastify";
-import { requestParam } from "@jims/types/common";
+import { requestParam } from "@jims/shared/schema/common.js";
 
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 

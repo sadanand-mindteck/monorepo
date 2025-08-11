@@ -1,5 +1,5 @@
 {
-  "name": "jims-server",
+  "name": "@jims/server",
   "version": "1.0.0",
   "description": "JIMS Backend API with Fastify, Drizzle ORM, and PostgreSQL",
   "main": "src/server.js",
@@ -20,8 +20,7 @@
     "db:seed": "node src/db/seed.js"
   },
   "dependencies": {
-    "@jims/db": "workspace:*",
-    "@jims/types": "workspace:*",
+    "@jims/shared": "workspace:^1.0.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/jwt": "^9.1.0",
@@ -45,7 +44,6 @@
     "zod": "^4.0.14"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
     "@types/bcrypt": "^6.0.0",
     "@types/cli-color": "^2.0.6",
     "@types/mime-types": "^3.0.1",

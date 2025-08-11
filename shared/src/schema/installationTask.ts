@@ -1,7 +1,7 @@
-import { installationTasks } from "@jims/db";
+import { installationTasks } from "../db/schema.js";
 import { z } from "zod";
 import { createSelectSchema } from "drizzle-zod";
-import { pagination, querySchema } from "./common";
+import { pagination, querySchema } from "./common.js";
 
 export const installationTaskSchema = createSelectSchema(installationTasks, {
   id: z.number().int().positive(),

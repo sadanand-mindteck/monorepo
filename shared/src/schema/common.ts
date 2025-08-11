@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { entityType } from './file';
+import { entityType } from './file.js';
 
 
 export const requestParam = z.object({ id: z.string() });

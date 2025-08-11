@@ -1,7 +1,7 @@
-import { db } from "@jims/db/connection";
-import { organizations } from "@jims/db/schema";
-import { createOrganizationSchema, updateOrganizationSchema, organizationQuerySchema } from "@jims/types/organization";
-import { requestParam } from "@jims/types/common";
+import { db } from "@jims/shared/db/connection.js";
+import { organizations } from "@jims/shared/db/schema.js";
+import { createOrganizationSchema, updateOrganizationSchema, organizationQuerySchema } from "@jims/shared/schema/organization.js";
+import { requestParam } from "@jims/shared/schema/common.js";
 import { eq, desc, like, count, and } from "drizzle-orm";
 import { FastifyInstance } from "fastify";
 

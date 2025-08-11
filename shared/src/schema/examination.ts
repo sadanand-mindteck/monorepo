@@ -1,7 +1,7 @@
 import { createSelectSchema } from "drizzle-zod";
-import {examinations} from "@jims/db";
+import {examinations} from "../db/schema.js";
 import { z } from "zod";
-import { pagination, querySchema } from "./common";
+import { pagination, querySchema } from "./common.js";
 
 export const examinationSchema = createSelectSchema(examinations,{
   name:z.string(),

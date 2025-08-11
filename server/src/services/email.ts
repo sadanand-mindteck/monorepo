@@ -1,6 +1,6 @@
 // import nodemailer, { Transporter } from "nodemailer";
 // import dotenv from "dotenv";
-// import { EmailResponse, MfaEmailParams, PasswordResetParams, WelcomeEmailParams } from "@jims/types/user";
+// import { EmailResponse, MfaEmailParams, PasswordResetParams, WelcomeEmailParams } from "@jims/shared/schema/user";
 
 // dotenv.config();
 

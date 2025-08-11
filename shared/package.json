@@ -1,23 +1,85 @@
 {
-  "name": "@jims/types",
-  "version": "0.0.0",
+  "name": "@jims/shared",
+  "version": "1.0.0",
   "private": true,
-  "exports": {
-  "./*": "./dist/*.js"
-  
-  },
   "type": "module",
-  "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc"
+  "exports": {
+    "./db": {
+      "import": "./dist/db/index.js",
+      "types": "./dist/db/index.d.ts"
+    },
+    "./db/connection.js": {
+      "import": "./dist/db/connection.js",
+      "types": "./dist/db/connection.d.ts"
+    },
+    "./db/schema.js": {
+      "import": "./dist/db/schema.js",
+      "types": "./dist/db/schema.d.ts"
+    },
+
+
+
+    
+    "./schema/auth.js": {
+      "import": "./dist/schema/auth.js",
+      "types": "./dist/schema/auth.d.ts"
+    },
+    "./schema/common.js": {
+      "import": "./dist/schema/common.js",
+      "types": "./dist/schema/common.d.ts"
+    },
+    "./schema/examCenter.js": {
+      "import": "./dist/schema/examCenter.js",
+      "types": "./dist/schema/examCenter.d.ts"
+    },
+    "./schema/examination.js": {
+      "import": "./dist/schema/examination.js",
+      "types": "./dist/schema/examination.d.ts"
+    },
+    "./schema/file.js": {
+      "import": "./dist/schema/file.js",
+      "types": "./dist/schema/file.d.ts"
+    },
+    "./schema/installation.js": {
+      "import": "./dist/schema/installation.js",
+      "types": "./dist/schema/installation.d.ts"
+    },
+    "./schema/jammer.js": {
+      "import": "./dist/schema/jammer.js",
+      "types": "./dist/schema/jammer.d.ts"
+    },
+    "./schema/organization.js": {
+      "import": "./dist/schema/organization.js",
+      "types": "./dist/schema/organization.d.ts"
+    },
+    "./schema/shipment.js": {
+      "import": "./dist/schema/shipment.js",
+      "types": "./dist/schema/shipment.d.ts"
+    },
+    "./schema/shipmentItem.js": {
+      "import": "./dist/schema/shipmentItem.js",
+      "types": "./dist/schema/shipmentItem.d.ts"
+    },
+    "./schema/user.js": {
+      "import": "./dist/schema/user.js",
+      "types": "./dist/schema/user.d.ts"
+    },
+    "./schema": {
+      "import": "./dist/schema/index.js",
+      "types": "./dist/schema/index.d.ts"
+    }
   },
-  "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "typescript": "latest"
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
   },
   "dependencies": {
-    "@jims/db": "workspace:*",
-    "drizzle-zod": "^0.8.3",
-    "zod": "^4.0.15"
+    "zod": "^4.0.17",
+    "drizzle-orm": "^0.44.4",
+    "drizzle-zod": "^0.8.3"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.4",
+    "typescript": "^5.9.2"
   }
 }

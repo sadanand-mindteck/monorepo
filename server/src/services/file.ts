@@ -5,9 +5,9 @@ import sharp from "sharp"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
 
-import { db } from "@jims/db/connection"
-import { files } from "@jims/db/schema"
-import { EntityType } from "@jims/types/file"
+import { db } from "@jims/shared/db/connection.js"
+import { files } from "@jims/shared/db/schema.js"
+import { EntityType } from "@jims/shared/schema/file.js"
 
 interface UploadedFile {
   file: { bytesRead: number }

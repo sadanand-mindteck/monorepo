@@ -1,15 +1,15 @@
-import { db } from "@jims/db/connection";
-import { examinations, examCenters, organizations, users } from "@jims/db/schema";
+import { db } from "@jims/shared/db/connection.js";
+import { examinations, examCenters, organizations, users } from "@jims/shared/db/schema.js";
 import { eq, desc, like, or, count, and, sum } from "drizzle-orm";
 import { FastifyInstance } from "fastify";
 import {
   createExaminationSchema,
   examinationSchemaUpdate,
   examinationQuerySchema,
-} from "@jims/types/examination";
+} from "@jims/shared/schema/examination.js";
 
-import { createExamCenterSchema } from "@jims/types/examCenter";
-import { requestParam } from "@jims/types/common";
+import { createExamCenterSchema } from "@jims/shared/schema/examCenter.js";
+import { requestParam } from "@jims/shared/schema/common.js";
 
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 

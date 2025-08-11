@@ -4,10 +4,10 @@ import { eq, desc, and, count } from "drizzle-orm";
 import { MultipartFile } from "@fastify/multipart";
 import fs from "fs";
 
-import { files } from "@jims/db/schema";
-import { db } from "@jims/db/connection";
-import { requestParam, requestParamEntity } from "@jims/types/common";
-import { fileQuerySchema } from "@jims/types/file";
+import { files } from "@jims/shared/db/schema.js";
+import { db } from "@jims/shared/db/connection.js";
+import { requestParam, requestParamEntity } from "@jims/shared/schema/common.js";
+import { fileQuerySchema } from "@jims/shared/schema/file.js";
 import { fileService } from "../services/file.js";
 
 export default async function fileRoutes(fastify: FastifyInstance) {

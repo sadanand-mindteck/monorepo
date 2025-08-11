@@ -1,0 +1,21 @@
+{
+  "name": "jims-monorepo",
+  "version": "1.0.0",
+  "description": "A monorepo for client, server, and shared packages.",
+  "private": true,
+  "scripts": {
+    "build": "pnpm --filter ./shared build && pnpm --filter ./server build && pnpm --filter ./client build",
+    "build:all": "pnpm --parallel --filter './**' build",
+    "dev": "pnpm --parallel --filter './**' dev",
+    "start": "pnpm --parallel --filter './**' start",
+    "clean": "pnpm -r exec rm -rf dist node_modules"
+  },
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

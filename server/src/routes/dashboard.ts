@@ -1,11 +1,11 @@
 import { FastifyInstance } from "fastify/types/instance.js";
-import { db } from "@jims/db/connection";
-import { jammers, shipments, examinations, users, organizations, activityLogs } from "@jims/db/schema";
+import { db } from "@jims/shared/db/connection.js";
+import { jammers, shipments, examinations, users, organizations, activityLogs } from "@jims/shared/db/schema.js";
 import { count, eq, desc, gte } from "drizzle-orm";
-import { JammerStatus } from "@jims/types/jammer";
-import { ShipmentStatus } from "@jims/types/shipment";
+import { JammerStatus } from "@jims/shared/schema/jammer.js";
+import { ShipmentStatus } from "@jims/shared/schema/shipment.js";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { requestParam, requestParamLimit } from "@jims/types/common";
+import { requestParam, requestParamLimit } from "@jims/shared/schema/common.js";
 
 export default async function dashboardRoutes(fastify: FastifyInstance) {
   // Get dashboard statistics

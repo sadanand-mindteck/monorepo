@@ -1,4 +1,4 @@
-import { AccessTokenPayload } from "@jims/types/auth";
+import { AccessTokenPayload } from "@jims/shared/schema/auth.js";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 const tokenBlacklist: Map<string, number> = new Map();

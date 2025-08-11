@@ -1,7 +1,7 @@
 import { createSelectSchema } from "drizzle-zod";
-import { jammers } from "@jims/db/schema";
+import { jammers } from "../db/schema.js";
 import { z } from "zod";
-import { pagination, querySchema } from "./common";
+import { pagination, querySchema } from "./common.js";
 
 export const jammerSchema = createSelectSchema(jammers, {
   serialNumber: z.string().min(1, "Serial number is required"),

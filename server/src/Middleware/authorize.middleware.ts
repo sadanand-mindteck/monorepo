@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { UserRole } from "@jims/types/user";
-import { AccessTokenPayload } from "@jims/types/auth";
+import { UserRole } from "@jims/shared/schema/user.js";
+import { AccessTokenPayload } from "@jims/shared/schema/auth.js";
 
 export const authorize = (roles: UserRole[]) => {
   return async (request: FastifyRequest, reply: FastifyReply) => {

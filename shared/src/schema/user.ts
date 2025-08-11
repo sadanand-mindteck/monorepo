@@ -1,7 +1,7 @@
-import { users } from "@jims/db";
+import { users } from "../db/schema.js";
 import { z } from "zod";
 import { createSelectSchema } from "drizzle-zod";
-import { pagination, querySchema } from "./common";
+import { pagination, querySchema } from "./common.js";
 
 export const userSchema = createSelectSchema(users, {
   id: z.number().int().positive(),
