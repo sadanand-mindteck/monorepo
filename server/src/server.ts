@@ -2,16 +2,18 @@ import Fastify, { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import dotenv from "dotenv";
 import path from "path";
 import fastifyStatic from "@fastify/static";
-
-// Load environment variables
 dotenv.config();
-
-// Import plugins
-
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
-
 import fastifyCookie from "@fastify/cookie";
+import fastifyJwt from "@fastify/jwt";
+import multipart from "@fastify/multipart";
+import cors from "@fastify/cors";
+import { ZodError } from "zod";
+import { DrizzleError, DrizzleQueryError } from "drizzle-orm";
+import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod"
+//
+import { authenticate } from "./Middleware/authenticate.middleware.js";
 // Import routes
 import authRoutes from "./routes/auth.js";
 import dashboardRoutes from "./routes/dashboard.js";
@@ -20,23 +22,21 @@ import jammerRoutes from "./routes/jammers.js";
 import organizationRoutes from "./routes/organizations.js";
 import shipmentRoutes from "./routes/shipments.js";
 import fileRoutes from "./routes/files.js";
-import fastifyJwt from "@fastify/jwt";
-import multipart from "@fastify/multipart";
-import cors from "@fastify/cors";
-import { authenticate } from "./Middleware/authenticate.middleware.js";
-import { ZodError } from "zod";
-import { DrizzleError, DrizzleQueryError } from "drizzle-orm";
-import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod"
 
 const fastify = Fastify({
   logger:true
 });
 
+
+
 fastify.setValidatorCompiler(validatorCompiler)
 fastify.setSerializerCompiler(serializerCompiler)
 
-const setup = async () => {
+async function setup (){
   // Register plugins
+
+
+  //cors
   fastify.register(cors, {
     origin: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -54,6 +54,8 @@ const setup = async () => {
     },
   });
 
+
+  //
   fastify.decorate(
     "authenticate",
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -75,6 +77,9 @@ const setup = async () => {
     }
     await authenticate(request, reply);
   });
+
+
+  // swagger
 
   await fastify.register(fastifySwagger, {
     openapi: {
@@ -178,6 +183,8 @@ const setup = async () => {
     transformSpecificationClone: true,
   });
 
+  // 
+
   await fastify.register(multipart, {
     limits: {
       fileSize: Number.parseInt(process.env.MAX_FILE_SIZE || "10485760"), // 10MB
@@ -198,11 +205,17 @@ const setup = async () => {
   await fastify.register(shipmentRoutes, { prefix: "/api/shipments" });
   await fastify.register(fileRoutes, { prefix: "/api/files" });
 
+
+
+
   // Health check endpoint
   fastify.get("/health", { schema: { tags: ["HEALTH"] } }, async () => ({
     status: "ok",
     timestamp: new Date().toISOString(),
   }));
+
+
+
 
   // Error handler
 fastify.setErrorHandler((error: any, request, reply) => {
@@ -268,7 +281,7 @@ fastify.setErrorHandler((error: any, request, reply) => {
 };
 
 // Start server
-const start = async () => {
+(async () => {
   try {
     await setup();
 
@@ -280,9 +293,9 @@ const start = async () => {
 
     console.log(`🚀 Server running on http://${host}:${port}`);
     console.log(
-      `📚 API Documentation available at http://${host}:${port}/documentation`
+      `📚 API Documentation available at http://${host}:${port}/docs`
     );
-    console.log(`🔒 MFA Support: Email, SMS, TOTP`);
+    // console.log(`🔒 MFA Support: Email, SMS, TOTP`);
     console.log(
       `📁 File Upload: Enabled with ${process.env.MAX_FILE_SIZE || 10485760} bytes limit`
     );
@@ -290,6 +303,4 @@ const start = async () => {
     fastify.log.error(err);
     process.exit(1);
   }
-};
-
-start();
+})();

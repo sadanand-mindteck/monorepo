@@ -4,9 +4,9 @@ import { z } from "zod";
 import { pagination, querySchema } from "./common.js";
 
 export const examinationSchema = createSelectSchema(examinations,{
-  examDate:z.string(),
-  name:z.string(),
-  examCode:z.string(),
+  examDate:z.string().min(1),
+  name:z.string().min(1),
+  examCode:z.string().min(1),
   id:z.number().int().positive(),
   totalCenters:z.number().int().positive(),
   totalJammersRequired:z.number().int().positive()

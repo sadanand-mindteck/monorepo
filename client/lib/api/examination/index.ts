@@ -7,12 +7,12 @@ import { ExaminationInput } from "@jims/shared/schema";
 
 async function getExaminations() {
   const {
-    data: { data },
-  } = await axiosInstance<ExaminationResponse>("/examinations");
+    data:{data},
+  } = await axiosInstance<{data: Examination[]}>("/examinations");
   return data;
 }
 
-async function deleteExamination(id: string) {
+async function deleteExamination(id: number) {
   const { data } = await axiosInstance.delete("/examinations/" + id);
   return data;
 }

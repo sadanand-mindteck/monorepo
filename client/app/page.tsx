@@ -8,16 +8,15 @@ import { RHFInput } from "@/components/rhf/rhf-input";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import * as yup from "yup";
 import { login } from "@/lib/api/auth";
 import { useMutation } from "@tanstack/react-query";
 import { UserRole } from "@jims/shared/schema/user";
-import { RegisterInput, registerSchema } from "@jims/shared/schema";
+import { LoginInput, loginSchema } from "@jims/shared/schema";
 
 export default function LoginPage() {
   const router = useRouter();
-  const methods = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
+  const methods = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -25,7 +24,7 @@ export default function LoginPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: RegisterInput) => login(data),
+    mutationFn: (data: LoginInput) => login(data),
     onSuccess: (data) => {
       handleLogin(data.user.role);
       localStorage.setItem("user", JSON.stringify(data.user));
@@ -76,12 +75,12 @@ export default function LoginPage() {
             <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm">
               <p className="font-medium mb-2">Demo Credentials:</p>
               <p>
-                <strong>Email:</strong> demo@example.com
+                <strong>Email:</strong> admin@bel.co.in
               </p>
               <p>
                 <strong>Password:</strong> password123
               </p>
-              <p className="text-gray-600 mt-2">Select any role to explore the system</p>
+             
             </div>
           </CardContent>
         </Card>

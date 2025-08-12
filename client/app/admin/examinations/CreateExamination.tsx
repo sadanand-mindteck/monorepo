@@ -1,28 +1,21 @@
-// app/components/CreateExaminationDialog.tsx
 "use client";
-
 import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
+  Dialog, DialogContent,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useForm, FormProvider, Controller } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import * as yup from "yup";
 import { RHFInput } from "@/components/rhf/rhf-input";
 import { RHFSelect } from "@/components/rhf/rhf-select";
 import { useMutation } from "@tanstack/react-query";
 import { createExamination, updateExamination } from "@/lib/api/examination";
-import { Dispatch, SetStateAction, use, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import { ExaminationResponse,ExamCenterInput, ExaminationInput, createExaminationSchema, Examination } from "@jims/shared/schema/index";
+import { ExaminationInput, createExaminationSchema, Examination } from "@jims/shared/schema/examination";
 import { getISTDateTimeLocal } from "@/utils/date-helper";
-
-
 
 
 const defaultValues: ExaminationInput = {
@@ -40,7 +33,7 @@ export function CreateExamination({
 }: {
   refetchExaminations: () => void;
   selectedExamination?: Examination | null;
-  setSelectedExamination: Dispatch<SetStateAction<ExaminationResponse | null>>;
+  setSelectedExamination: Dispatch<SetStateAction<Examination | null>>;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   const methods = useForm<ExaminationInput>({
@@ -50,7 +43,7 @@ export function CreateExamination({
 
   const mutation = useMutation({
     mutationFn: async (data: ExaminationInput) => {
-      if (selectedExamination?.id) {
+      if (selectedExamination) {
         return await updateExamination(selectedExamination.id, data);
       } else {
         return await createExamination(data);
@@ -77,10 +70,10 @@ export function CreateExamination({
     if (selectedExamination) {
       setOpen(true);
       methods.reset({
-        name: selectedExamination?.name || "",
-        examCode: selectedExamination?.examCode || "",
-        examDate: getISTDateTimeLocal(selectedExamination?.examDate),
-        status: selectedExamination?.status || "draft",
+        name: selectedExamination.name || "",
+        examCode: selectedExamination.examCode || "",
+        examDate: getISTDateTimeLocal(selectedExamination.examDate),
+        status: selectedExamination.status || "draft",
       });
     } else {
       setSelectedExamination(null);
@@ -88,11 +81,6 @@ export function CreateExamination({
     }
   }, [selectedExamination, methods]);
 
-  console.log(
-    "Selected Examination:",
-    selectedExamination,
-    methods.getValues()
-  );
 
   return (
     <Dialog open={true} onOpenChange={setOpen}>

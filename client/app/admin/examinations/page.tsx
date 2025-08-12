@@ -8,19 +8,18 @@ import { DataTable } from "@/components/ui/data-table";
 import { CreateExamination } from "./CreateExamination";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { deleteExamination, getExaminations } from "@/lib/api/examination";
-import { ExaminationResponse } from "@/types";
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Dispatch, SetStateAction, useState } from "react";
 import { DeleteButtonWithConfirm } from "@/components/utils/DeleteButtonWithConfirm";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns-tz";
+import { Examination, ExaminationResponse } from "@jims/shared/schema";
 
 export default function ExaminationsPage() {
-  const [selectedExamination, setSelectedExamination] =
-    useState<ExaminationResponse | null>(null);
+  const [selectedExamination, setSelectedExamination] = useState<Examination | null>(null);
 
-  const [columns] = useState<ColumnDef<ExaminationResponse>[]>([
+  const [columns] = useState<ColumnDef<Examination>[]>([
     {
       accessorKey: "name",
       header: "Exam Name",
@@ -55,7 +54,7 @@ export default function ExaminationsPage() {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const status = row.getValue("status") as ExaminationResponse["status"];
+        const status = row.getValue("status") as Examination["status"];
         const colorMap: Record<typeof status, string> = {
           draft: "bg-gray-200 text-gray-800",
           planning: "bg-yellow-200 text-yellow-800",
@@ -105,7 +104,7 @@ export default function ExaminationsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteExamination(id),
+    mutationFn: (id:number) => deleteExamination(id),
     onSuccess: () => {
       toast({ title: "Examination deleted successfully" });
       refetch();
@@ -116,7 +115,7 @@ export default function ExaminationsPage() {
   });
 
   function handleDelete(
-    exam: ExaminationResponse,
+    exam: Examination,
     setOpen: Dispatch<SetStateAction<boolean>>
   ) {
     deleteMutation.mutate(exam.id, {
@@ -125,6 +124,7 @@ export default function ExaminationsPage() {
       },
     });
   }
+  console.log(data,"data")
 
   return (
     <div className="space-y-6">
@@ -190,7 +190,7 @@ export default function ExaminationsPage() {
       </div>
       {/* Examinations Table */}
 
-      <DataTable isLoading={isLoading} columns={columns} data={data || []} />
+      <DataTable isLoading={isLoading} columns={columns} data={data||[]} />
     </div>
   );
 }

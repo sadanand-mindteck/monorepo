@@ -136,7 +136,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
 
   // Create examination
   fastify.withTypeProvider<ZodTypeProvider>().post(
-    "/",
+    "",
     {
       schema: {
         body: createExaminationSchema,

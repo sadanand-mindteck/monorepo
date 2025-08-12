@@ -4,10 +4,9 @@
   "description": "A monorepo for client, server, and shared packages.",
   "private": true,
   "scripts": {
-    "build": "pnpm --filter ./shared build && pnpm --filter ./server build && pnpm --filter ./client build",
-    "build:all": "pnpm --parallel --filter './**' build",
-    "dev": "pnpm --parallel --filter './**' dev",
-    "start": "pnpm --parallel --filter './**' start",
+    "build": "echo \"Building shared...\" && pnpm --filter ./shared build && echo \"Building server...\" && pnpm --filter ./server build && echo \"Building client...\" && pnpm --filter ./client build",
+    "dev": "concurrently \"pnpm --filter ./client dev\" \"pnpm --filter ./server dev\" \"pnpm --filter ./shared dev\" --names \"client,server,shared\"",
+    "start": "concurrently \"pnpm --filter ./client start\" \"pnpm --filter ./server start\" \"pnpm --filter ./shared start\" --names \"client,server,shared\"",
     "clean": "pnpm -r exec rm -rf dist node_modules"
   },
   "workspaces": [
@@ -17,5 +16,8 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
   }
 }
