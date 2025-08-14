@@ -17,7 +17,6 @@ export interface ServerSideDataTableProps<T> {
       }
     | undefined;
   isLoading: Boolean;
-  isFetching: Boolean;
   page: string;
   setPage: React.Dispatch<React.SetStateAction<string>>;
   limit: string;
@@ -30,7 +29,6 @@ export function ServerSideDataTable<T>({
   columns,
   data,
   isLoading,
-  isFetching,
   page = "1",
   limit = "10",
   setLimit,
@@ -39,6 +37,7 @@ export function ServerSideDataTable<T>({
   setSearch,
 }: ServerSideDataTableProps<T>) {
   const searchDebounce = React.useRef<NodeJS.Timeout | null>(null);
+  const [searchInput, setSearchInput] = React.useState(search || ""); // instant typing
 
   const table = useReactTable({
     data: data?.data ?? [],
@@ -46,13 +45,15 @@ export function ServerSideDataTable<T>({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
+  React.useEffect(() => {
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
     searchDebounce.current = setTimeout(() => {
+      setSearch(searchInput); // triggers query only after delay
       setPage("1");
     }, 500);
-  };
+
+    return () => clearTimeout(searchDebounce.current!);
+  }, [searchInput]);
 
   return (
     <div className="space-y-4">
@@ -60,7 +61,12 @@ export function ServerSideDataTable<T>({
       <div className="flex items-center gap-2">
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." value={search} onChange={(e) => handleSearchChange(e.target.value)} className="pl-8" />
+          <Input
+            placeholder="Search..."
+            value={searchInput} // instant feedback
+            onChange={(e) => setSearchInput(e.target.value)} // no delay here
+            className="pl-8"
+          />
         </div>
       </div>
 
@@ -77,7 +83,7 @@ export function ServerSideDataTable<T>({
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading || isFetching ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center h-24">
                   <div className="flex items-center justify-center gap-2">
@@ -110,7 +116,13 @@ export function ServerSideDataTable<T>({
         {/* Rows per page */}
         <div className="flex items-center gap-2">
           <span className="text-sm">Rows per page:</span>
-          <Select value={String(limit)} onValueChange={(v) => {setLimit(v);setPage("1")}}>
+          <Select
+            value={String(limit)}
+            onValueChange={(v) => {
+              setLimit(v);
+              setPage("1");
+            }}
+          >
             <SelectTrigger className="w-[80px] h-8">
               <SelectValue />
             </SelectTrigger>
@@ -126,7 +138,12 @@ export function ServerSideDataTable<T>({
 
         {/* Pagination */}
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPage((p: string) => Math.max(+p - 1, 1).toString())} disabled={page === "1"}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p: string) => Math.max(+p - 1, 1).toString())}
+            disabled={page === "1"}
+          >
             <ChevronsLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm">
@@ -135,8 +152,8 @@ export function ServerSideDataTable<T>({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPage((p: string) => Math.min(+p + 1, data?.pagination.total || 0).toString())}
-            disabled={+page >= (data?.pagination.total || 0)}
+            onClick={() => setPage((p: string) => Math.min(+p + 1, data?.pagination.total || 1).toString())}
+            disabled={+page >= (data?.pagination.pages || 1)}
           >
             <ChevronsRight className="h-4 w-4" />
           </Button>

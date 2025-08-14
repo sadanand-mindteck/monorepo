@@ -28,7 +28,7 @@ export default function ExaminationsPage() {
   const [limit, setLimit] = useState("10");
   const [search, setSearch] = useState("");
 
-  const { data, isLoading, isFetching,refetch } = useQuery({
+  const { data, isLoading ,refetch } = useQuery({
     queryKey: [page, limit, search],
     queryFn: () => getExaminations({ page, limit, search }),
     // keepPreviousData: true,
@@ -182,7 +182,6 @@ export default function ExaminationsPage() {
       <ServerSideDataTable<Examination>
         columns={columns}
         data={data}
-        isFetching={isFetching}
         isLoading={isLoading}
         limit={limit}
         page={page}
