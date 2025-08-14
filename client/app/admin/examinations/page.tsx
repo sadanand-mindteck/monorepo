@@ -16,29 +16,33 @@ import { format } from "date-fns-tz";
 import { ExaminationResponse } from "@jims/shared/schema";
 import { ServerSideDataTable } from "@/components/ui/data-table-pagination";
 import { useQuery } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Get QueryClient from the context
 
 export type Examination = ExaminationResponse["data"][number];
+const STATUS = ["draft", "planning", "active", "completed", "cancelled", "All"];
 
 export default function ExaminationsPage() {
   const [selectedExamination, setSelectedExamination] = useState<Examination | null>(null);
   const [open, setOpen] = useState(false);
+
   const [page, setPage] = useState("1");
   const [limit, setLimit] = useState("10");
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
 
-  const { data, isLoading ,refetch } = useQuery({
-    queryKey: [page, limit, search],
-    queryFn: () => getExaminations({ page, limit, search }),
-    // keepPreviousData: true,
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: [page, limit, search, status],
+    queryFn: () => getExaminations({ page, limit, search, status }),
   });
+  // console.log(status, "status");
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteExamination(id),
     onSuccess: () => {
       toast({ title: "Examination deleted successfully" });
-      refetch()
+      refetch();
     },
     onError: () => {
       toast({ title: "Failed to delete examination" });
@@ -189,7 +193,20 @@ export default function ExaminationsPage() {
         setPage={setPage}
         setSearch={setSearch}
         search={search}
-      />
+      >
+        <Select value={status} onValueChange={(e) => setStatus(e)} >
+          <SelectTrigger>
+            <SelectValue placeholder={"filter Status"} />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </ServerSideDataTable>
     </div>
   );
 }

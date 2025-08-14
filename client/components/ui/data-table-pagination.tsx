@@ -23,6 +23,7 @@ export interface ServerSideDataTableProps<T> {
   setLimit: React.Dispatch<React.SetStateAction<string>>;
   search?: string;
   setSearch: React.Dispatch<React.SetStateAction<string>>;
+  children: React.ReactNode;
 }
 
 export function ServerSideDataTable<T>({
@@ -35,6 +36,7 @@ export function ServerSideDataTable<T>({
   search = "",
   setPage,
   setSearch,
+  children,
 }: ServerSideDataTableProps<T>) {
   const searchDebounce = React.useRef<NodeJS.Timeout | null>(null);
   const [searchInput, setSearchInput] = React.useState(search || ""); // instant typing
@@ -68,6 +70,7 @@ export function ServerSideDataTable<T>({
             className="pl-8"
           />
         </div>
+        {children}
       </div>
 
       {/* Table */}
