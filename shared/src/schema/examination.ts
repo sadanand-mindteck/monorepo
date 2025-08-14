@@ -21,7 +21,7 @@ export const createExaminationSchema = examinationSchema.omit({
 });
 export const examinationSchemaUpdate = createExaminationSchema;
 export const examinationResponse = z.object({
-  data: examinationSchema.omit({ createdAt: true, updatedAt: true }).array(),
+  data: examinationSchema.array(),
   pagination,
 });
 export const examinationQuerySchema = querySchema.extend({

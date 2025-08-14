@@ -14,8 +14,9 @@ import { useMutation } from "@tanstack/react-query";
 import { createExamination, updateExamination } from "@/lib/api/examination";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import { ExaminationInput, createExaminationSchema, Examination } from "@jims/shared/schema/examination";
+import { ExaminationInput, ExaminationResponse, createExaminationSchema } from "@jims/shared/schema/examination";
 import { getISTDateTimeLocal } from "@/utils/date-helper";
+import { Examination } from "./page";
 
 
 const defaultValues: ExaminationInput = {

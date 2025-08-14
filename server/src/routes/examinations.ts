@@ -26,9 +26,8 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
     },
     async (request) => {
       // 1. Safely parse query parameters into numbers
-      const { search, status } = request.query;
-      const page = request.query.page ?? 1;
-      const limit = request.query.limit ?? 10;
+      const { search, status, page=1, limit=10 } = request.query;
+
 
       const offset = (page - 1) * limit;
 
@@ -68,7 +67,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
       // 4. Execute queries concurrently for better performance
       const [results, totalResult] = await Promise.all([dataQuery, totalQuery]);
 
-      const total = totalResult.at(1) || {count:0};
+      const total = totalResult.at(0) || {count:1};
       
 
       return {
@@ -76,7 +75,7 @@ export default async function examinationRoutes(fastify: FastifyInstance) {
         pagination: {
           page,
           limit,
-          total,
+          total:total.count,
           pages: Math.ceil(total.count / limit),
         },
       };

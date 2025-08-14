@@ -1,32 +1,0 @@
-[?25l[2J[m[2;1H> jims-client@0.1.0 build C:\Users\sadanand.gopal\Desktop\jims-monorepo\apps\client
-> next build[5;1H]0;C:\Windows\system32\cmd.exe[?25h[?25l [33m[1m⚠[m Warning: Found multiple lockfiles. Selecting C:\Users\sadanand.gopal\Desktop\jims-monorepo\pnpm-lock.yaml.
-   Consider removing the lockfiles at:
-   * C:\Users\sadanand.gopal\Desktop\jims-monorepo\apps\client\pnpm-lock.yaml[9;1H[?25h[?25l   [38;2;173;127;168m[1m▲ Next.js 15.4.5[m
-   - Environments: .env[12;1H[?25h [37m[1m [m Creating an optimized production build ...
- [32m[1m✓[m Compiled successfully in 28.0s
- [37m[1m [m Skipping validation of types
- [37m[1m [m Skipping linting
- [37m[1m [m Collecting page data  [36m.[?25l[m [37m[1m [m Collecting page data  [36m..[K[118C[m [37m[1m [m Collecting page data  [36m...[K[117C[m[K[145C [37m[1m [m Collecting page data  [36m.[m[K[145C [37m[1m [m Collecting page data  [36m..[m [37m[1m [m Collecting page data  [36m...[K[117C[m [37m[1m [m Collecting page data  [36m.[K[119C[m[K[145C [37m[1m [m Collecting page data  [36m..[m [37m[1m [m Collecting page data  [36m...[K[117C[m [37m[1m [m Collecting page data  [36m.[K[119C[m [37m[1m [m Collecting page data  [36m..[K[118C[m [37m[1m [m Collecting page data  [36m...[K[117C[m[K[145C [37m[1m [m Collecting page data  [36m.[m[K[145C [37m[1m [m Collecting page data  [36m..[m [37m[1m [m Collecting page data  [36m...[K[117C[m [37m[1m [m Collecting page data  [36m.[K[119C[m [32m[1m✓[m Collecting page data[K
-[?25h [37m[1m [m Generating static pages (0/12)  [36m[    ][?25l[m [37m[1m [m Generating static pages (0/12)  [36m[=   ][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[==  ][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[=== ][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[ ===][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[  ==][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[   =][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[    ][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[   =][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[  ==][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[ ===][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[====][K[104C[m [37m[1m [m Generating static pages (0/12)  [36m[=== ][K[104C[m [37m[1m [m Generating static pages (8/12)  [36m[==  ][K[104C[m [37m[1m [m Generating static pages (8/12)  [36m[=   ][K[104C[m [32m[1m✓[m Generating static pages (12/12)[K
-[?25h [37m[1m [m Finalizing page optimization  [36m. [37m[1m [m Collecting build traces  [36m.[?25l[m [32m[1m✓[m Collecting build traces[K[?25h
- [32m[1m✓[m Finalizing page optimization[K
-
-[4mRoute (app)[24m[33X[4m[33CSize[24m  [4mFirst Load JS[24m[K
-┌ ○ /                                    3.03 kB[37m[1m[9C158 kB[m[K
-├ ○ /_not-found                            991 B[37m[1m[9C101 kB[m[K
-├ ○ /admin                               3.55 kB[37m[1m[9C112 kB[m[K
-├ ○ /admin/examinations                  35.4 kB[37m[1m[9C221 kB[m[K
-├ ○ /admin/jammers                       3.37 kB[37m[1m[9C112 kB[m[K
-├ ○ /admin/organizations                 3.43 kB[37m[1m[9C112 kB[m[K
-├ ○ /admin/reports                       4.17 kB[37m[1m[9C140 kB[m[K
-├ ○ /admin/users                         3.54 kB[37m[1m[9C112 kB[m[K
-├ ○ /operator                            5.07 kB[37m[1m[9C114 kB[m[K
-└ ○ /warehouse                           3.55 kB[37m[1m[9C112 kB[m[K
-+ First Load JS shared by all[37m[1m[13C100 kB[m[K
-  ├ chunks/246-e5e04fca9e81ef91.js       44.2 kB
-  ├ chunks/52ce4d83-237d7ac7fcfda918.js  54.1 kB
-  └ other shared chunks (total)             2 kB
-
-
-○  (Static)  prerendered as static content
-

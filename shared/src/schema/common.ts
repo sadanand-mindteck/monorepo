@@ -8,6 +8,9 @@ export const requestParamLimit = z.object({ limit: z.number().int().positive() }
 export const pagination = z.object({ page: z.number(), limit: z.number(), total: z.number(), pages: z.number() });
 export const querySchema = z.object({
   search: z.string().optional(),
-  page: z.number().optional(),
-  limit: z.number().optional(),
+  page: z.coerce.number().optional(),
+  limit: z.coerce.number().optional(),
 });
+export const getDataPagination=  z.object({ page: z.string().optional(), limit: z.string().optional(), search:z.string().optional() });
+
+export type GetDataPagination = z.infer<typeof getDataPagination>;

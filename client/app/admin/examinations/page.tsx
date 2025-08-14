@@ -3,10 +3,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Delete, Edit3, Plus, Trash, Upload } from "lucide-react";
-import { DataTable } from "@/components/ui/data-table";
+import { Edit3, Plus, Upload } from "lucide-react";
 import { CreateExamination } from "./CreateExamination";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { deleteExamination, getExaminations } from "@/lib/api/examination";
 
 import { ColumnDef } from "@tanstack/react-table";
@@ -14,32 +13,61 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { DeleteButtonWithConfirm } from "@/components/utils/DeleteButtonWithConfirm";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns-tz";
-import { Examination, ExaminationResponse } from "@jims/shared/schema";
+import { ExaminationResponse } from "@jims/shared/schema";
+import { ServerSideDataTable } from "@/components/ui/data-table-pagination";
+import { useQuery } from "@tanstack/react-query";
+
+// Get QueryClient from the context
+
+export type Examination = ExaminationResponse["data"][number];
 
 export default function ExaminationsPage() {
   const [selectedExamination, setSelectedExamination] = useState<Examination | null>(null);
+  const [open, setOpen] = useState(false);
+  const [page, setPage] = useState("1");
+  const [limit, setLimit] = useState("10");
+  const [search, setSearch] = useState("");
 
-  const [columns] = useState<ColumnDef<Examination>[]>([
+  const { data, isLoading, isFetching,refetch } = useQuery({
+    queryKey: [page, limit, search],
+    queryFn: () => getExaminations({ page, limit, search }),
+    // keepPreviousData: true,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteExamination(id),
+    onSuccess: () => {
+      toast({ title: "Examination deleted successfully" });
+      refetch()
+    },
+    onError: () => {
+      toast({ title: "Failed to delete examination" });
+    },
+  });
+
+  function handleDelete(exam: Examination, setDialogOpen: Dispatch<SetStateAction<boolean>>) {
+    deleteMutation.mutate(exam.id, {
+      onSuccess: () => setDialogOpen(false),
+    });
+  }
+
+  const columns: ColumnDef<Examination>[] = [
     {
       accessorKey: "name",
       header: "Exam Name",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("name")}</div>
-      ),
+      cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
     },
     {
       accessorKey: "examCode",
       header: "Exam Code",
-      cell: ({ row }) => (
-        <div className="text-muted-foreground">{row.getValue("examCode")}</div>
-      ),
+      cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("examCode")}</div>,
     },
     {
       accessorKey: "examDate",
       header: "Exam Date",
       cell: ({ row }) => {
-        const date = row.getValue("examDate") as string
-        return <div>{format(date, "dd MMM yyyy")}</div>
+        const date = row.getValue("examDate") as string;
+        return <div>{format(date, "dd MMM yyyy")}</div>;
       },
     },
     {
@@ -62,11 +90,7 @@ export default function ExaminationsPage() {
           completed: "bg-blue-200 text-blue-800",
           cancelled: "bg-red-200 text-red-800",
         };
-        return (
-          <Badge className={colorMap[status]}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
-        );
+        return <Badge className={colorMap[status]}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
       },
     },
     {
@@ -86,45 +110,12 @@ export default function ExaminationsPage() {
             >
               <Edit3 />
             </Button>
-            <DeleteButtonWithConfirm
-              isLoading={deleteMutation.isPending}
-              item={exam}
-              onConfirm={handleDelete}
-            />
+            <DeleteButtonWithConfirm isLoading={deleteMutation.isPending} item={exam} onConfirm={handleDelete} />
           </div>
         );
       },
     },
-  ]);
-  const [open, setOpen] = useState(false);
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["examinations"],
-    queryFn: getExaminations,
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id:number) => deleteExamination(id),
-    onSuccess: () => {
-      toast({ title: "Examination deleted successfully" });
-      refetch();
-    },
-    onError: () => {
-      toast({ title: "Failed to delete examination" });
-    },
-  });
-
-  function handleDelete(
-    exam: Examination,
-    setOpen: Dispatch<SetStateAction<boolean>>
-  ) {
-    deleteMutation.mutate(exam.id, {
-      onSuccess: () => {
-        setOpen(false);
-      },
-    });
-  }
-  console.log(data,"data")
+  ];
 
   return (
     <div className="space-y-6">
@@ -158,9 +149,7 @@ export default function ExaminationsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Examinations</h1>
-          <p className="text-muted-foreground">
-            Manage examination schedules and center assignments
-          </p>
+          <p className="text-muted-foreground">Manage examination schedules and center assignments</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
@@ -190,7 +179,18 @@ export default function ExaminationsPage() {
       </div>
       {/* Examinations Table */}
 
-      <DataTable isLoading={isLoading} columns={columns} data={data||[]} />
+      <ServerSideDataTable<Examination>
+        columns={columns}
+        data={data}
+        isFetching={isFetching}
+        isLoading={isLoading}
+        limit={limit}
+        page={page}
+        setLimit={setLimit}
+        setPage={setPage}
+        setSearch={setSearch}
+        search={search}
+      />
     </div>
   );
 }

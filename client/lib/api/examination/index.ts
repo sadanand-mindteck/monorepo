@@ -4,12 +4,12 @@ import {
 } from "@jims/shared/schema/examination";
 import axiosInstance from "..";
 import { ExaminationInput } from "@jims/shared/schema";
+import {GetDataPagination} from "@jims/shared/schema/common"
 
-async function getExaminations() {
-  const {
-    data:{data},
-  } = await axiosInstance<{data: Examination[]}>("/examinations");
-  return data;
+async function getExaminations({page, limit, search}:GetDataPagination) {
+  
+   return (await axiosInstance<ExaminationResponse>("/examinations",{params:{page, limit, search:search||undefined}})).data;
+  
 }
 
 async function deleteExamination(id: number) {

@@ -20,8 +20,10 @@ export function DeleteButtonWithConfirm({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button size="icon" variant="destructive">
-          <Trash className="h-4 w-4" />
+        <Button size="icon"
+              variant="outline"
+              >
+          <Trash color="red" />
         </Button>
       </PopoverTrigger>
 
