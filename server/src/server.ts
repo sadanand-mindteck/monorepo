@@ -2,7 +2,6 @@ import Fastify, { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import dotenv from "dotenv";
 import path from "path";
 import fastifyStatic from "@fastify/static";
-dotenv.config();
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import fastifyCookie from "@fastify/cookie";
@@ -11,7 +10,7 @@ import multipart from "@fastify/multipart";
 import cors from "@fastify/cors";
 import { ZodError } from "zod";
 import { DrizzleError, DrizzleQueryError } from "drizzle-orm";
-import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod"
+import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 //
 import { authenticate } from "./Middleware/authenticate.middleware.js";
 // Import routes
@@ -22,19 +21,19 @@ import jammerRoutes from "./routes/jammers.js";
 import organizationRoutes from "./routes/organizations.js";
 import shipmentRoutes from "./routes/shipments.js";
 import fileRoutes from "./routes/files.js";
+import userRoutes from "./routes/user.js";
+
+dotenv.config();
 
 const fastify = Fastify({
-  logger:true
+  logger: true,
 });
 
+fastify.setValidatorCompiler(validatorCompiler);
+fastify.setSerializerCompiler(serializerCompiler);
 
-
-fastify.setValidatorCompiler(validatorCompiler)
-fastify.setSerializerCompiler(serializerCompiler)
-
-async function setup (){
+async function setup() {
   // Register plugins
-
 
   //cors
   fastify.register(cors, {
@@ -54,18 +53,14 @@ async function setup (){
     },
   });
 
-
   //
-  fastify.decorate(
-    "authenticate",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      try {
-        await request.jwtVerify();
-      } catch (err) {
-        reply.code(401).send({ error: "Unauthorized" });
-      }
+  fastify.decorate("authenticate", async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      await request.jwtVerify();
+    } catch (err) {
+      reply.code(401).send({ error: "Unauthorized" });
     }
-  );
+  });
 
   fastify.addHook("onRequest", async (request, reply) => {
     if (
@@ -77,7 +72,6 @@ async function setup (){
     }
     await authenticate(request, reply);
   });
-
 
   // swagger
 
@@ -94,10 +88,7 @@ async function setup (){
       },
       servers: [
         {
-          url:
-            process.env.NODE_ENV === "production"
-              ? "https://api.jims.com"
-              : "http://localhost:3001",
+          url: process.env.NODE_ENV === "production" ? "https://api.jims.com" : "http://localhost:3001",
         },
       ],
       components: {
@@ -183,7 +174,7 @@ async function setup (){
     transformSpecificationClone: true,
   });
 
-  // 
+  //
 
   await fastify.register(multipart, {
     limits: {
@@ -204,9 +195,7 @@ async function setup (){
   await fastify.register(organizationRoutes, { prefix: "/api/organizations" });
   await fastify.register(shipmentRoutes, { prefix: "/api/shipments" });
   await fastify.register(fileRoutes, { prefix: "/api/files" });
-
-
-
+  await fastify.register(userRoutes, { prefix: "/api/users" });
 
   // Health check endpoint
   fastify.get("/health", { schema: { tags: ["HEALTH"] } }, async () => ({
@@ -214,71 +203,65 @@ async function setup (){
     timestamp: new Date().toISOString(),
   }));
 
-
-
-
   // Error handler
-fastify.setErrorHandler((error: any, request, reply) => {
-  console.log(error,"==========================================Error occurred=============================================");
+  fastify.setErrorHandler((error: any, request, reply) => {
+    console.log(error, "==========================================Error occurred=============================================");
 
-  // Zod validation error
-  if (error instanceof ZodError) {
-    return reply.status(400).send({
-      statusCode: 400,
-      error: "Validation Error",
-      message: "Invalid request data",
-      issues: error.issues,
+    // Zod validation error
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "Validation Error",
+        message: "Invalid request data",
+        issues: error.issues,
+      });
+    }
+
+    // Fastify validation error
+    if ((error as FastifyError).validation) {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "Validation Error",
+        message: "Invalid request parameters",
+        details: (error as FastifyError).validation,
+      });
+    }
+
+    // Drizzle or database error
+    if (error instanceof DrizzleError || error.code === "23505" || error.code === "23503") {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "Database Error",
+        message: error.detail || error.message,
+        code: error.code,
+      });
+    }
+
+    if (error instanceof DrizzleQueryError) {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "Drizzle Query Error",
+        message: error.message,
+      });
+    }
+
+    // File upload error
+    if (error.code === "FST_FILES_LIMIT") {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: "File Upload Error",
+        message: `File size limit exceeded. Max allowed: ${process.env.MAX_FILE_SIZE || 10485760} bytes`,
+      });
+    }
+
+    // Fallback to generic 500
+    return reply.status(500).send({
+      statusCode: 500,
+      error: "Internal Server Error....",
+      message: process.env.NODE_ENV === "production" ? "Something went wrong" : error.message,
     });
-  }
-
-  // Fastify validation error
-  if ((error as FastifyError).validation) {
-    return reply.status(400).send({
-      statusCode: 400,
-      error: "Validation Error",
-      message: "Invalid request parameters",
-      details: (error as FastifyError).validation,
-    });
-  }
-
-  // Drizzle or database error
-  if (error instanceof DrizzleError || error.code === "23505" || error.code === "23503") {
-    return reply.status(400).send({
-      statusCode: 400,
-      error: "Database Error",
-      message: error.detail || error.message,
-      code: error.code,
-    });
-  }
-
-  if (error instanceof DrizzleQueryError) {
-    return reply.status(400).send({
-      statusCode: 400,
-      error: "Drizzle Query Error",
-      message: error.message,
-    });
-  }
-
-  // File upload error
-  if (error.code === "FST_FILES_LIMIT") {
-    return reply.status(400).send({
-      statusCode: 400,
-      error: "File Upload Error",
-      message: `File size limit exceeded. Max allowed: ${process.env.MAX_FILE_SIZE || 10485760} bytes`,
-    });
-  }
-
-  // Fallback to generic 500
-  return reply.status(500).send({
-    statusCode: 500,
-    error: "Internal Server Error....",
-    message:
-      process.env.NODE_ENV === "production"
-        ? "Something went wrong"
-        : error.message,
   });
-});
-};
+}
 
 // Start server
 (async () => {
@@ -286,19 +269,14 @@ fastify.setErrorHandler((error: any, request, reply) => {
     await setup();
 
     const port = Number(process.env.PORT) || 3001;
-    const host =
-      process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
+    const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
 
     await fastify.listen({ port, host });
 
     console.log(`🚀 Server running on http://${host}:${port}`);
-    console.log(
-      `📚 API Documentation available at http://${host}:${port}/docs`
-    );
+    console.log(`📚 API Documentation available at http://${host}:${port}/docs`);
     // console.log(`🔒 MFA Support: Email, SMS, TOTP`);
-    console.log(
-      `📁 File Upload: Enabled with ${process.env.MAX_FILE_SIZE || 10485760} bytes limit`
-    );
+    console.log(`📁 File Upload: Enabled with ${process.env.MAX_FILE_SIZE || 10485760} bytes limit`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

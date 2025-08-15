@@ -1,207 +1,185 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Search, Shield, Warehouse, UserCheck, Edit, MoreHorizontal } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Edit3, Plus, Upload } from "lucide-react";
+import { CreateUser } from "./CreateUser";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { deleteUser, getUsers } from "@/lib/api/user";
+import { ColumnDef } from "@tanstack/react-table";
+import { Dispatch, SetStateAction, useState } from "react";
+import { DeleteButtonWithConfirm } from "@/components/utils/DeleteButtonWithConfirm";
+import { toast } from "@/hooks/use-toast";
+import { UserResponse } from "@jims/shared/schema/user";
+import { ServerSideDataTable } from "@/components/ui/data-table-pagination";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getOrganization } from "@/lib/api/organization";
+
+// Types
+export type User = UserResponse["data"][number];
+
+const STATUS = ["active", "inactive", "All"];
+const ROLE = ["admin", "warehouse", "operator", "All"];
 
 export default function UsersPage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [open, setOpen] = useState(false);
 
-  const users = [
-    {
-      id: "USR-001",
-      name: "Rajesh Kumar",
-      email: "rajesh.kumar@bel.co.in",
-      role: "BEL Admin",
-      organization: "BEL Headquarters",
-      status: "Active",
-      lastLogin: "2024-01-24 09:30 AM",
-    },
-    {
-      id: "USR-002",
-      name: "Priya Sharma",
-      email: "priya.sharma@warehouse.com",
-      role: "Warehouse Operator",
-      organization: "Delhi Central Warehouse",
-      status: "Active",
-      lastLogin: "2024-01-24 08:15 AM",
-    },
-    {
-      id: "USR-003",
-      name: "Amit Singh",
-      email: "amit.singh@secureinstall.com",
-      role: "Installation Operator",
-      organization: "SecureInstall Services",
-      status: "Active",
-      lastLogin: "2024-01-24 07:45 AM",
-    },
-    {
-      id: "USR-004",
-      name: "Sunita Patel",
-      email: "sunita.patel@warehouse.com",
-      role: "Warehouse Operator",
-      organization: "Mumbai Storage Facility",
-      status: "Inactive",
-      lastLogin: "2024-01-20 02:30 PM",
-    },
-    {
-      id: "USR-005",
-      name: "Vikram Gupta",
-      email: "vikram.gupta@techguard.com",
-      role: "Installation Operator",
-      organization: "TechGuard Solutions",
-      status: "Active",
-      lastLogin: "2024-01-24 06:00 AM",
-    },
-  ]
+  const [page, setPage] = useState("1");
+  const [limit, setLimit] = useState("10");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
+  const [role, setRole] = useState("All");
 
-  const getRoleIcon = (role: string) => {
-    if (role === "BEL Admin") return Shield
-    if (role === "Warehouse Operator") return Warehouse
-    return UserCheck
+  // Fetch Users
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["users", page, limit, search, status, role],
+    queryFn: () => getUsers({ page, limit, search, status, role }),
+  });
+
+  // Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteUser(id),
+    onSuccess: () => {
+      toast({ title: "User deleted successfully" });
+      refetch();
+    },
+    onError: () => {
+      toast({ title: "Failed to delete user" });
+    },
+  });
+
+  function handleDelete(user: User, setDialogOpen: Dispatch<SetStateAction<boolean>>) {
+    deleteMutation.mutate(user.id, {
+      onSuccess: () => setDialogOpen(false),
+    });
   }
 
-  const getRoleColor = (role: string) => {
-    if (role === "BEL Admin") return "bg-purple-100 text-purple-800"
-    if (role === "Warehouse Operator") return "bg-blue-100 text-blue-800"
-    return "bg-green-100 text-green-800"
-  }
-
-  const getStatusColor = (status: string) => {
-    return status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-  }
+  // Table Columns
+  const columns: ColumnDef<User>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "role",
+      header: "Role",
+    },
+    {
+      accessorKey: "phone",
+      header: "Phone",
+    },
+    {
+      accessorKey: "mfaEnabled",
+      header: "MFA",
+      cell: ({ row }) => (row.getValue("mfaEnabled") ? "Enabled" : "Disabled"),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <div className="flex gap-2">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => {
+                setSelectedUser(user);
+                setOpen(true);
+              }}
+            >
+              <Edit3 />
+            </Button>
+            <DeleteButtonWithConfirm isLoading={deleteMutation.isPending} item={user} onConfirm={handleDelete} />
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Users</h1>
-          <p className="text-muted-foreground">Manage system users and their access permissions</p>
-        </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add User
-        </Button>
-      </div>
-
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline">Filter by Role</Button>
-            <Button variant="outline">Filter by Status</Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-          <CardDescription>Complete list of system users with their roles and access status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Organization</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => {
-                const RoleIcon = getRoleIcon(user.role)
-                return (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium">
-                            {user.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getRoleColor(user.role)}>
-                        <RoleIcon className="w-3 h-3 mr-1" />
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{user.organization}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(user.status)}>{user.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">{user.lastLogin}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Quick Stats */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">5</div>
+            <div className="text-2xl font-bold">{0}</div>
             <p className="text-sm text-muted-foreground">Total Users</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">4</div>
-            <p className="text-sm text-muted-foreground">Active Users</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-sm text-muted-foreground">BEL Admins</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">2</div>
-            <p className="text-sm text-muted-foreground">Field Operators</p>
-          </CardContent>
-        </Card>
+        {/* Add more stats if needed */}
       </div>
+
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Users</h1>
+          <p className="text-muted-foreground">Manage system users and permissions</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Bulk Upload
+          </Button>
+          <Button
+            variant="default"
+            onClick={() => {
+              setOpen(true);
+              setSelectedUser(null);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add New User
+          </Button>
+        </div>
+      </div>
+
+      {/* Create/Edit User Modal */}
+      {open && <CreateUser refetchUsers={refetch} selectedUser={selectedUser} setSelectedUser={setSelectedUser} setOpen={setOpen} />}
+
+      {/* Table */}
+      <ServerSideDataTable<User>
+        columns={columns}
+        data={data}
+        isLoading={isLoading}
+        limit={limit}
+        page={page}
+        setLimit={setLimit}
+        setPage={setPage}
+        setSearch={setSearch}
+        search={search}
+      >
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={role} onValueChange={setRole}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by Role" />
+          </SelectTrigger>
+          <SelectContent>
+            {ROLE.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </ServerSideDataTable>
     </div>
-  )
+  );
 }

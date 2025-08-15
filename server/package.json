@@ -9,15 +9,7 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "build": "tsc",
     "copy-env": "cp .env dist/.env",
-    "dev": "tsc-watch --onSuccess \"node dist/server.js\" ",
-    "drizzle:generate": "npx drizzle-kit generate",
-    "drizzle:migrate": "npx drizzle-kit migrate",
-    "drizzle:push": "npx drizzle-kit push",
-    "drizzle:pull": "npx drizzle-kit pull",
-    "drizzle:check": "npx drizzle-kit check",
-    "drizzle:up": "npx drizzle-kit up",
-    "drizzle:studio": "npx drizzle-kit studio",
-    "db:seed": "node src/db/seed.js"
+    "dev": "tsc-watch --onSuccess \"node dist/server.js\" "
   },
   "dependencies": {
     "@jims/shared": "workspace:^1.0.0",

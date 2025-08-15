@@ -22,6 +22,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export type Examination = ExaminationResponse["data"][number];
 const STATUS = ["draft", "planning", "active", "completed", "cancelled", "All"];
+const colorMap: Record<Examination["status"], string> = {
+  draft: "bg-gray-200 text-gray-800",
+  planning: "bg-yellow-200 text-yellow-800",
+  active: "bg-green-200 text-green-800",
+  completed: "bg-blue-200 text-blue-800",
+  cancelled: "bg-red-200 text-red-800",
+};
 
 export default function ExaminationsPage() {
   const [selectedExamination, setSelectedExamination] = useState<Examination | null>(null);
@@ -36,7 +43,6 @@ export default function ExaminationsPage() {
     queryKey: [page, limit, search, status],
     queryFn: () => getExaminations({ page, limit, search, status }),
   });
-  // console.log(status, "status");
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteExamination(id),
@@ -87,13 +93,6 @@ export default function ExaminationsPage() {
       header: "Status",
       cell: ({ row }) => {
         const status = row.getValue("status") as Examination["status"];
-        const colorMap: Record<typeof status, string> = {
-          draft: "bg-gray-200 text-gray-800",
-          planning: "bg-yellow-200 text-yellow-800",
-          active: "bg-green-200 text-green-800",
-          completed: "bg-blue-200 text-blue-800",
-          cancelled: "bg-red-200 text-red-800",
-        };
         return <Badge className={colorMap[status]}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
       },
     },
@@ -194,9 +193,9 @@ export default function ExaminationsPage() {
         setSearch={setSearch}
         search={search}
       >
-        <Select value={status} onValueChange={(e) => setStatus(e)} >
+        <Select value={status} onValueChange={setStatus}>
           <SelectTrigger>
-            <SelectValue placeholder={"filter Status"} />
+            <SelectValue placeholder="filter Status" />
           </SelectTrigger>
           <SelectContent>
             {STATUS.map((opt) => (

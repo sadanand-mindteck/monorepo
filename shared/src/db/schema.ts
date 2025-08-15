@@ -1,16 +1,16 @@
-import { pgTable, serial, varchar, text, timestamp, integer, boolean, decimal, pgEnum, AnyPgColumn, date } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, text, timestamp, integer, boolean, decimal, pgEnum, AnyPgColumn, date } from "drizzle-orm/pg-core";
 
 // Enums
-const userRoleEnum = pgEnum("user_role", ["admin", "warehouse", "operator"])
-const jammerStatusEnum = pgEnum("jammer_status", ["ok", "faulty", "in_transit", "deployed", "maintenance"])
-const shipmentStatusEnum = pgEnum("shipment_status", ["pending", "in_transit", "delivered", "cancelled"])
-const examStatusEnum = pgEnum("exam_status", ["draft", "planning", "active", "completed", "cancelled"])
-const organizationTypeEnum = pgEnum("organization_type", ["warehouse", "installation_agency"])
-const mfaMethodEnum = pgEnum("mfa_method", ["email", "sms", "totp"])
-const fileTypeEnum = pgEnum("file_type", ["image", "document", "certificate", "report"])
-const taskTypeEnum =pgEnum("task_type", ["attendance", "receive", "install", "power_on", "upload_cert", "power_off"])
-const installationTaskStatusEnum = pgEnum("installation_task_status", ["pending", "completed"])
-const entityTypeEnum = pgEnum("entityType",["jammer", "shipment", "installation"])
+export const userRoleEnum = pgEnum("user_role", ["admin", "warehouse", "operator"]);
+export const jammerStatusEnum = pgEnum("jammer_status", ["ok", "faulty", "in_transit", "deployed", "maintenance"]);
+export const shipmentStatusEnum = pgEnum("shipment_status", ["pending", "in_transit", "delivered", "cancelled"]);
+export const examStatusEnum = pgEnum("exam_status", ["draft", "planning", "active", "completed", "cancelled"]);
+export const organizationTypeEnum = pgEnum("organization_type", ["warehouse", "installation_agency"]);
+export const mfaMethodEnum = pgEnum("mfa_method", ["email", "sms", "totp"]);
+export const fileTypeEnum = pgEnum("file_type", ["image", "document", "certificate", "report"]);
+export const taskTypeEnum = pgEnum("task_type", ["attendance", "receive", "install", "power_on", "upload_cert", "power_off"]);
+export const installationTaskStatusEnum = pgEnum("installation_task_status", ["pending", "completed"]);
+export const entityTypeEnum = pgEnum("entity_type", ["jammer", "shipment", "installation"]);
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey().notNull().unique(),
@@ -19,18 +19,20 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 20 }),
   role: userRoleEnum("role").notNull(),
-  organizationId: integer("organization_id").references(() => organizations.id),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   isActive: boolean("is_active").default(true),
   emailVerified: boolean("email_verified").default(false).notNull(),
   phoneVerified: boolean("phone_verified").default(false).notNull(),
   mfaEnabled: boolean("mfa_enabled").default(false),
-  mfaMethod: mfaMethodEnum("mfa_method"),
+  mfaMethod: mfaMethodEnum("mfa_method").default("email"),
   mfaSecret: varchar("mfa_secret", { length: 255 }),
   lastLogin: timestamp("last_login"),
-  createdBy: integer("created_by").references(():any=> users.id),
+  createdBy: integer("created_by").references((): any => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-})
+});
 
 // MFA Tokens table
 export const mfaTokens = pgTable("mfa_tokens", {
@@ -41,7 +43,7 @@ export const mfaTokens = pgTable("mfa_tokens", {
   expiresAt: timestamp("expires_at").notNull(),
   used: boolean("used").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-})
+});
 
 // Organizations table
 export const organizations = pgTable("organizations", {
@@ -55,7 +57,7 @@ export const organizations = pgTable("organizations", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-})
+});
 
 // Examinations table
 export const examinations = pgTable("examinations", {
@@ -69,16 +71,16 @@ export const examinations = pgTable("examinations", {
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-})
+});
 
 // Exam Centers table
 export const examCenters = pgTable("exam_centers", {
-  id: serial("id").primaryKey().unique(),
+  id: serial("id").primaryKey(),
   examinationId: integer("examination_id").references(() => examinations.id),
   name: varchar("name", { length: 255 }).notNull(),
   address: text("address").notNull(),
-  latitude: integer("latitude").notNull(),
-  longitude: integer("longitude").notNull(),
+  latitude: varchar("latitude", { length: 20 }).notNull(),
+  longitude: varchar("longitude", { length: 20 }).notNull(),
   jammersRequired: integer("jammers_required").notNull(),
   assignedAgencyId: integer("assigned_agency_id").references(() => organizations.id),
   assignedOperatorId: integer("assigned_operator_id").references(() => users.id),
@@ -87,7 +89,7 @@ export const examCenters = pgTable("exam_centers", {
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-})
+});
 
 // Jammers table
 export const jammers = pgTable("jammers", {
@@ -101,7 +103,7 @@ export const jammers = pgTable("jammers", {
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-})
+});
 
 // Shipments table
 export const shipments = pgTable("shipments", {
@@ -118,7 +120,7 @@ export const shipments = pgTable("shipments", {
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-})
+});
 
 // Shipment Items table
 export const shipmentItems = pgTable("shipment_items", {
@@ -126,7 +128,7 @@ export const shipmentItems = pgTable("shipment_items", {
   shipmentId: integer("shipment_id").references(() => shipments.id),
   jammerId: integer("jammer_id").references(() => jammers.id),
   createdAt: timestamp("created_at").defaultNow(),
-})
+});
 
 // Installation Tasks table
 export const installationTasks = pgTable("installation_tasks", {
@@ -142,7 +144,7 @@ export const installationTasks = pgTable("installation_tasks", {
   photoUrl: varchar("photo_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-})
+});
 
 // Files table
 export const files = pgTable("files", {
@@ -156,7 +158,7 @@ export const files = pgTable("files", {
   uploadedBy: integer("uploaded_by").references(() => users.id),
   entityType: entityTypeEnum().notNull(), // jammer, shipment, installation, etc.
   createdAt: timestamp("created_at").defaultNow(),
-})
+});
 
 // Activity Logs table
 export const activityLogs = pgTable("activity_logs", {
@@ -168,4 +170,4 @@ export const activityLogs = pgTable("activity_logs", {
   details: text("details"),
   ipAddress: varchar("ip_address", { length: 45 }),
   createdAt: timestamp("created_at").defaultNow(),
-})
+});

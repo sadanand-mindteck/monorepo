@@ -9,6 +9,7 @@ export const userSchema = createSelectSchema(users, {
   name: z.string().min(1, "Name is required"),
   emailVerified: z.boolean().default(false),
   phoneVerified: z.boolean().default(false),
+  organizationId: z.string(),
 }).omit({ password: true, mfaSecret: true, updatedAt: true, createdAt: true });
 
 export const createUserSchema = userSchema.omit({
@@ -19,12 +20,12 @@ export const createUserSchema = userSchema.omit({
   lastLogin: true,
   createdBy: true,
 });
-export const updateUserSchema = userSchema.partial();
+export const userSchemaUpdate = userSchema.partial();
 export const userResponse = z.object({
   data: userSchema.array(),
   pagination,
 });
-export const userRole = userSchema.shape.role
+export const userRole = userSchema.shape.role;
 export const userQuerySchema = querySchema.extend({
   role: userSchema.shape.role.optional(),
   isActive: userSchema.shape.isActive.optional(),
@@ -32,7 +33,7 @@ export const userQuerySchema = querySchema.extend({
 
 export type User = z.infer<typeof userSchema>;
 export type UserInput = z.infer<typeof createUserSchema>;
-export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type UserInputUpdate = z.infer<typeof userSchemaUpdate>;
 export type UserResponse = z.infer<typeof userResponse>;
 export type UserQuery = z.infer<typeof userQuerySchema>;
 export type UserRole = z.infer<typeof userRole>;

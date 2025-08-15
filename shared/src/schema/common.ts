@@ -12,5 +12,7 @@ export const querySchema = z.object({
   limit: z.coerce.number().optional(),
 });
 export const getDataPagination=  z.object({ page: z.string().optional(), limit: z.string().optional(), search:z.string().optional(),  status: z.string().optional(), });
+export const getDataPaginationUser=  getDataPagination.extend({role: z.string().optional()});
 
 export type GetDataPagination = z.infer<typeof getDataPagination>;
+export type GetDataPaginationUser = z.infer<typeof getDataPaginationUser>;

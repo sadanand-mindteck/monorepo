@@ -17,10 +17,7 @@ export const createOrganizationSchema = organizationSchema.omit({
   isActive: true,
 });
 export const updateOrganizationSchema = organizationSchema.partial();
-export const organizationResponse = z.object({
-  data: organizationSchema.array(),
-  pagination,
-});
+export const organizationResponse = organizationSchema.array();
 export const organizationQuerySchema = querySchema.extend({
   type: organizationSchema.shape.type.optional(),
 });

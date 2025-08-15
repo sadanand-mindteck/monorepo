@@ -1,181 +1,106 @@
-// import { db } from "./connection.js"
-// import { users, organizations, examinations, examCenters, jammers } from "./schema"
-// import bcrypt from "bcryptjs"
+import dotenv from "dotenv";
+import { faker } from "@faker-js/faker";
+import bcrypt from "bcryptjs";
+import { db, sql } from "./connection.js"; // your connection.ts/js
+import * as schema from "./schema.js";
 
-// async function seedDatabase() {
-//   try {
-//     console.log("Seeding database...")
+dotenv.config();
 
-//     // Create organizations
-//     const [warehouse1, warehouse2, agency1, agency2] = await db
-//       .insert(organizations)
-//       .values([
-//         {
-//           name: "Delhi Central Warehouse",
-//           type: "warehouse",
-//           location: "New Delhi",
-//           contactEmail: "warehouse.delhi@example.com",
-//           contactPhone: "+91-9876543210",
-//           capacity: "3000 units",
-//         },
-//         {
-//           name: "Mumbai Storage Facility",
-//           type: "warehouse",
-//           location: "Mumbai",
-//           contactEmail: "warehouse.mumbai@example.com",
-//           contactPhone: "+91-9876543211",
-//           capacity: "2500 units",
-//         },
-//         {
-//           name: "SecureInstall Services",
-//           type: "installation_agency",
-//           location: "Pan India",
-//           contactEmail: "ops@secureinstall.com",
-//           contactPhone: "+91-9876543212",
-//           capacity: "50 operators",
-//         },
-//         {
-//           name: "TechGuard Solutions",
-//           type: "installation_agency",
-//           location: "North India",
-//           contactEmail: "support@techguard.com",
-//           contactPhone: "+91-9876543213",
-//           capacity: "30 operators",
-//         },
-//       ])
-//       .returning()
+async function main() {
+  console.log("🌱 Starting seed...");
 
-//     // Create users
-//     const hashedPassword = await bcrypt.hash("password123", 10)
+  // Clear tables in correct order (manual since drizzle-seed's reset not used)
+  await db.delete(schema.activityLogs);
+  await db.delete(schema.files);
+  await db.delete(schema.installationTasks);
+  await db.delete(schema.shipmentItems);
+  await db.delete(schema.shipments);
+  await db.delete(schema.jammers);
+  await db.delete(schema.examCenters);
+  await db.delete(schema.examinations);
+  await db.delete(schema.users);
+  await db.delete(schema.organizations);
 
-//     const [admin, warehouseUser, operator1, operator2] = await db
-//       .insert(users)
-//       .values([
-//         {
-//           email: "admin@bel.co.in",
-//           password: hashedPassword,
-//           name: "BEL Administrator",
-//           role: "admin",
-//         },
-//         {
-//           email: "warehouse@example.com",
-//           password: hashedPassword,
-//           name: "Warehouse Operator",
-//           role: "warehouse",
-//           organizationId: warehouse1.id,
-//         },
-//         {
-//           email: "operator1@example.com",
-//           password: hashedPassword,
-//           name: "Field Operator 1",
-//           role: "operator",
-//           organizationId: agency1.id,
-//         },
-//         {
-//           email: "operator2@example.com",
-//           password: hashedPassword,
-//           name: "Field Operator 2",
-//           role: "operator",
-//           organizationId: agency2.id,
-//         },
-//       ])
-//       .returning()
+  // --- Organizations ---
+  const orgData = Array.from({ length: 4 }, () => ({
+    name: faker.company.name(),
+    type: faker.helpers.arrayElement(["warehouse", "installation_agency"]),
+    address: faker.location.city(),
+    contactEmail: faker.internet.email(),
+    contactPhone: faker.phone.number({ style: "national" }),
+    capacity: faker.number.int({ min: 100, max: 5000 }),
+    isActive: true,
+  }));
 
-//     // Create examinations
-//     const [exam1, exam2] = await db
-//       .insert(examinations)
-//       .values([
-//         {
-//           name: "Engineering Entrance Exam 2024",
-//           examCode: "EX-2024-001",
-//           examDate: new Date("2024-02-15"),
-//           status: "active",
-//           totalCenters: 2,
-//           totalJammersRequired: 24,
-//           createdBy: admin.id,
-//         },
-//         {
-//           name: "Medical College Admission Test",
-//           examCode: "EX-2024-002",
-//           examDate: new Date("2024-02-20"),
-//           status: "planning",
-//           totalCenters: 1,
-//           totalJammersRequired: 12,
-//           createdBy: admin.id,
-//         },
-//       ])
-//       .returning()
+  const insertedOrgs = await db.insert(schema.organizations).values(orgData).returning();
+  console.log(`✅ Inserted ${insertedOrgs.length} organizations`);
 
-//     // Create exam centers
-//     const [center1, center2, center3] = await db
-//       .insert(examCenters)
-//       .values([
-//         {
-//           examinationId: exam1.id,
-//           name: "Government College, Sector 5",
-//           address: "Sector 5, Dwarka, New Delhi - 110075",
-//           latitude: "28.5921",
-//           longitude: "77.0460",
-//           jammersRequired: 12,
-//           assignedAgencyId: agency1.id,
-//           assignedOperatorId: operator1.id,
-//           reportingTime: "07:00",
-//           examStartTime: "10:00",
-//         },
-//         {
-//           examinationId: exam1.id,
-//           name: "Central University",
-//           address: "Central University Campus, New Delhi - 110067",
-//           latitude: "28.6139",
-//           longitude: "77.2090",
-//           jammersRequired: 12,
-//           assignedAgencyId: agency2.id,
-//           assignedOperatorId: operator2.id,
-//           reportingTime: "07:30",
-//           examStartTime: "10:00",
-//         },
-//         {
-//           examinationId: exam2.id,
-//           name: "Technical Institute",
-//           address: "Technical Institute, Mumbai - 400001",
-//           latitude: "19.0760",
-//           longitude: "72.8777",
-//           jammersRequired: 12,
-//           assignedAgencyId: agency1.id,
-//           assignedOperatorId: operator1.id,
-//           reportingTime: "08:00",
-//           examStartTime: "10:30",
-//         },
-//       ])
-//       .returning()
+  // --- Users ---
+  const hashedPassword = await bcrypt.hash("password123", 10);
+  const userData = Array.from({ length: 6 }, () => ({
+    email: faker.internet.email(),
+    password: hashedPassword,
+    name: faker.person.fullName(),
+    phone: faker.phone.number({ style: "national" }),
+    role: faker.helpers.arrayElement(["admin", "warehouse", "operator"]),
+    organizationId: faker.helpers.arrayElement(insertedOrgs).id,
+    isActive: true,
+    emailVerified: faker.datatype.boolean(),
+    phoneVerified: faker.datatype.boolean(),
+  }));
 
-//     // Create jammers
-//     const jammerData = []
-//     for (let i = 1; i <= 50; i++) {
-//       let status;
-//       if (i > 45) {
-//         status = "faulty";
-//       } else if (i > 40) {
-//         status = "in_transit";
-//       } else {
-//         status = "ok";
-//       }
-//       jammerData.push({
-//         serialNumber: `JM-2024-${i.toString().padStart(3, "0")}`,
-//         model: i % 3 === 0 ? "SecureBlock Max" : i % 2 === 0 ? "SecureBlock Pro" : "SecureBlock Lite",
-//         status,
-//         batteryLevel: Math.floor(Math.random() * 100) + 1,
-//         currentLocationId: i % 2 === 0 ? warehouse1.id : warehouse2.id,
-//         lastMaintenance: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-//       })
-//     }
+  const insertedUsers = await db.insert(schema.users).values(userData).returning();
+  console.log(`✅ Inserted ${insertedUsers.length} users`);
 
-//     await db.insert(jammers).values(jammerData)
+  // --- Examinations ---
+  const examData = Array.from({ length: 2 }, () => ({
+    name: faker.commerce.productName() + " Exam",
+    examCode: `EX-${faker.number.int({ min: 1000, max: 9999 })}`,
+    examDate: faker.date.future(),
+    status: faker.helpers.arrayElement(["planning", "active", "draft"]),
+    totalCenters: faker.number.int({ min: 1, max: 5 }),
+    totalJammersRequired: faker.number.int({ min: 5, max: 50 }),
+    createdBy: faker.helpers.arrayElement(insertedUsers).id,
+  }));
 
-//     console.log("Database seeded successfully!")
-//   } catch (error) {
-//     console.error("Seeding failed:", error)
-//   }
-// }
+  const insertedExams = await db.insert(schema.examinations).values(examData).returning();
+  console.log(`✅ Inserted ${insertedExams.length} examinations`);
 
-// seedDatabase()
+  // --- Exam Centers ---
+  const centerData = Array.from({ length: 3 }, () => ({
+    examinationId: faker.helpers.arrayElement(insertedExams).id,
+    name: faker.company.name(),
+    address: faker.location.streetAddress(),
+    latitude: faker.location.latitude({ min: -90, max: 90 }).toString(),
+    longitude: faker.location.longitude({ min: 77, max: 77 }).toString(),
+
+    jammersRequired: faker.number.int({ min: 5, max: 20 }),
+    assignedAgencyId: faker.helpers.arrayElement(insertedOrgs).id,
+    assignedOperatorId: faker.helpers.arrayElement(insertedUsers).id,
+    reportingTime: faker.date.future(),
+    examStartTime: faker.date.future(),
+  }));
+
+  const insertedCenters = await db.insert(schema.examCenters).values(centerData).returning();
+  console.log(`✅ Inserted ${insertedCenters.length} exam centers`);
+
+  // --- Jammers ---
+  const jammerData = Array.from({ length: 50 }, (_, i) => ({
+    serialNumber: `JM-2024-${(i + 1).toString().padStart(3, "0")}`,
+    model: faker.helpers.arrayElement(["SecureBlock Max", "SecureBlock Pro", "SecureBlock Lite"]),
+    status: faker.helpers.arrayElement(["ok", "faulty", "in_transit", "deployed", "maintenance"]),
+    currentLocationId: faker.helpers.arrayElement(insertedOrgs).id,
+    lastMaintenance: faker.date.past({ years: 1 }),
+  }));
+
+  await db.insert(schema.jammers).values(jammerData);
+  console.log(`✅ Inserted ${jammerData.length} jammers`);
+
+  console.log("🎉 Seed completed successfully!");
+  await sql.end({ timeout: 5 });
+}
+
+main().catch((err) => {
+  console.error("❌ Seed failed:", err);
+  sql.end({ timeout: 5 });
+});

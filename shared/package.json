@@ -16,10 +16,6 @@
       "import": "./dist/db/schema.js",
       "types": "./dist/db/schema.d.ts"
     },
-
-
-
-    
     "./schema/auth.js": {
       "import": "./dist/schema/auth.js",
       "types": "./dist/schema/auth.d.ts"
@@ -71,15 +67,26 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "drizzle:generate": "drizzle-kit generate",
+    "drizzle:migrate": "drizzle-kit migrate",
+    "drizzle:push": "drizzle-kit push",
+    "drizzle:pull": "drizzle-kit pull",
+    "drizzle:check": "drizzle-kit check",
+    "drizzle:up": "drizzle-kit up",
+    "drizzle:studio": "drizzle-kit studio",
+    "db:seed": "node dist/db/seed.js"
   },
   "dependencies": {
-    "zod": "^4.0.17",
+    "@faker-js/faker": "^9.9.0",
+    "bcryptjs": "^3.0.2",
     "drizzle-orm": "^0.44.4",
-    "drizzle-zod": "^0.8.3"
+    "drizzle-zod": "^0.8.3",
+    "zod": "^4.0.17"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.4",
+    "drizzle-seed": "^0.3.1",
     "typescript": "^5.9.2"
   }
 }

@@ -15,42 +15,10 @@ export default async function organizationRoutes(fastify: FastifyInstance) {
       schema: {
         tags: ["Organization"],
         summary: "Get all Organization",
-        querystring: organizationQuerySchema,
       },
     },
-    async (request) => {
-      const { type, search, page=1, limit =10 } = request.query;
-     
-
-      const offset = (page - 1) * limit;
-
-      const conditions = [];
-      // Apply filters
-      if (type) {
-        conditions.push(eq(organizations.type, type));
-      }
-      if (search) {
-        conditions.push(like(organizations.name, `%${search}%`));
-      }
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-      const query = db.select().from(organizations).where(whereClause).orderBy(desc(organizations.createdAt)).limit(limit).offset(offset);
-
-      const results = await query;
-
-      // Get total count
-      const totalQuery = await db.select({ count: count() }).from(organizations);
-      const total = totalQuery[0]!.count
-
-      return {
-        data: results,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
-      };
+    async () => {
+      return await db.select().from(organizations).orderBy(desc(organizations.createdAt));
     }
   );
 
@@ -88,9 +56,7 @@ export default async function organizationRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const organizationData = request.body;
-
-      const newOrganization = await db.insert(organizations).values(organizationData).returning();
+      const newOrganization = await db.insert(organizations).values(request.body).returning();
 
       return reply.code(201).send(newOrganization[0]);
     }
