@@ -3,6 +3,11 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
       "@jims/shared/*": ["../shared/dist/*"]

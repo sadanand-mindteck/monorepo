@@ -2,7 +2,7 @@ import { Organization, OrganizationResponse } from "@jims/shared/schema/organiza
 import axiosInstance from "..";
 import { OrganizationInput } from "@jims/shared/schema";
 
-async function getOrganization() {
+async function getOrganizations() {
   return (await axiosInstance<OrganizationResponse>("/organizations")).data;
 }
 
@@ -21,4 +21,4 @@ async function updateOrganization(id: number, req: OrganizationInput) {
   return data;
 }
 
-export { getOrganization, createOrganization, updateOrganization, deleteOrganization };
+export { getOrganizations, createOrganization, updateOrganization, deleteOrganization };

@@ -93,11 +93,13 @@ export default async function organizationRoutes(fastify: FastifyInstance) {
     {
       schema: {
         tags: ["Organization"],
-        summary: "update all Organization",
+        summary: "delete Organization",
         params: requestParam,
       },
     },
+
     async (request, reply) => {
+      // try {
       const { id } = request.params;
 
       const deletedOrganization = await db.delete(organizations).where(eq(organizations.id, +id)).returning();
@@ -107,6 +109,10 @@ export default async function organizationRoutes(fastify: FastifyInstance) {
       }
 
       return { message: "Organization deleted successfully" };
+      // } catch (error) {
+      //   log(error, "ERROR:");
+      //   return reply.code(500).send({ error: "fail to delete" });
+      // }
     }
   );
 }

@@ -1,8 +1,10 @@
 import { FastifyInstance } from "fastify";
+import cors from "@fastify/cors";
 
-export default async function corsPlugin(fastify:FastifyInstance) {
-  await fastify.register(import("@fastify/cors"), {
-    origin: process.env.NODE_ENV === "production" ? ["https://your-frontend-domain.com"] : true,
+export async function registerCors(app: FastifyInstance) {
+  await app.register(cors, {
+    origin: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-  })
+  });
 }

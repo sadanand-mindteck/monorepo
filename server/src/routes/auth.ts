@@ -1,12 +1,7 @@
 import bcrypt from "bcryptjs";
 import { db } from "@jims/shared/db/connection.js";
-import {users, organizations } from "@jims/shared/db/schema.js"
-import {
-  registerSchema,
-  changePasswordSchema,
-  LoginInput,
-  loginSchema,
-} from "@jims/shared/schema/auth.js";
+import { users, organizations } from "@jims/shared/db/schema.js";
+import { registerSchema, changePasswordSchema, LoginInput, loginSchema } from "@jims/shared/schema/auth.js";
 import { eq } from "drizzle-orm";
 // import { mfaService } from "../services/mfa.js";
 // import { emailService } from "../services/email.js";
@@ -23,7 +18,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
       schema: {
         tags: ["Authentication"],
         summary: "User login",
-        body:loginSchema
+        body: loginSchema,
         // body: zodToJsonSchema(loginSchema,{$refStrategy: "none"}),
         // response: {
         //   200: {
@@ -46,104 +41,95 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      
-        const { email, password } = request.body;
+      const { email, password } = request.body;
 
-        // Find user with organization details
-        const user = await db
-          .select({
-            id: users.id,
-            email: users.email,
-            password: users.password,
-            name: users.name,
-            phone: users.phone,
-            role: users.role,
-            organizationId: users.organizationId,
-            organizationName: organizations.name,
-            isActive: users.isActive,
-            mfaEnabled: users.mfaEnabled,
-            mfaMethod: users.mfaMethod,
-          })
-          .from(users)
-          .leftJoin(organizations, eq(users.organizationId, organizations.id))
-          .where(eq(users.email, email))
-          .limit(1);
+      // Find user with organization details
+      const user = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          password: users.password,
+          name: users.name,
+          phone: users.phone,
+          role: users.role,
+          organizationId: users.organizationId,
+          organizationName: organizations.name,
+          isActive: users.isActive,
+          mfaEnabled: users.mfaEnabled,
+          mfaMethod: users.mfaMethod,
+        })
+        .from(users)
+        .leftJoin(organizations, eq(users.organizationId, organizations.id))
+        .where(eq(users.email, email))
+        .limit(1);
 
-        if (!user.length || !user[0]?.isActive) {
-          return reply.code(401).send({ error: "Invalid credentials" });
-        }
-        
+      if (!user.length || !user[0]?.isActive) {
+        return reply.code(401).send({ error: "Invalid credentials" });
+      }
 
-        const isValidPassword = await bcrypt.compare(
-          password,
-          user[0].password
-        );
-        if (!isValidPassword) {
-          return reply.code(401).send({ error: "Invalid credentials" });
-        }
+      const isValidPassword = await bcrypt.compare(password, user[0].password);
+      if (!isValidPassword) {
+        return reply.code(401).send({ error: "Invalid credentials" });
+      }
 
-        const { password: _, ...userWithoutPassword } = user[0];
+      const { password: _, ...userWithoutPassword } = user[0];
 
-        // Check if MFA is enabled
-        // if (user[0].mfaEnabled) {
-        //   // Send MFA code
-        //   const mfaResult = await mfaService.sendMFACode(
-        //     user[0].id,
-        //     user[0].mfaMethod,
-        //     user[0].email,
-        //     user[0].phone,
-        //     user[0].name,
-        //   )
+      // Check if MFA is enabled
+      // if (user[0].mfaEnabled) {
+      //   // Send MFA code
+      //   const mfaResult = await mfaService.sendMFACode(
+      //     user[0].id,
+      //     user[0].mfaMethod,
+      //     user[0].email,
+      //     user[0].phone,
+      //     user[0].name,
+      //   )
 
-        //   if (!mfaResult || !mfaResult.success) {
-        //     return reply.code(500).send({ error: "Failed to send MFA code" })
-        //   }
+      //   if (!mfaResult || !mfaResult.success) {
+      //     return reply.code(500).send({ error: "Failed to send MFA code" })
+      //   }
 
-        //   // Generate temporary token for MFA verification
-        //   const tempToken = fastify.jwt.sign(
-        //     {
-        //       id: user[0].id,
-        //       email: user[0].email,
-        //       mfaPending: true,
-        //     },
-        //     { expiresIn: "10m" },
-        //   )
+      //   // Generate temporary token for MFA verification
+      //   const tempToken = fastify.jwt.sign(
+      //     {
+      //       id: user[0].id,
+      //       email: user[0].email,
+      //       mfaPending: true,
+      //     },
+      //     { expiresIn: "10m" },
+      //   )
 
-        //   return {
-        //     requiresMFA: true,
-        //     tempToken,
-        //     mfaMethod: user[0].mfaMethod,
-        //   }
-        // }
+      //   return {
+      //     requiresMFA: true,
+      //     tempToken,
+      //     mfaMethod: user[0].mfaMethod,
+      //   }
+      // }
 
-        // Update last login
-        await db
-          .update(users)
-          .set({ lastLogin: new Date() })
-          .where(eq(users.id, user[0].id));
+      // Update last login
+      await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, user[0].id));
 
-        // Generate JWT token
-        const token = fastify.jwt.sign({
-          id: user[0].id,
-          email: user[0].email,
-          role: user[0].role,
-          organizationId: user[0].organizationId,
-        });
+      // Generate JWT token
+      const token = fastify.jwt.sign({
+        id: user[0].id,
+        email: user[0].email,
+        role: user[0].role,
+        organizationId: user[0].organizationId,
+      });
 
-        // reply.setCookie("token", token, {
-        //   httpOnly: true,
-        //   secure: process.env.NODE_ENV === "production",
-        //   sameSite: "lax",
-        //   path: "/",
-        //   maxAge: 60 * 60 * 24, // 1 day
-        // });
+      // reply.setCookie("token", token, {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === "production",
+      //   sameSite: "lax",
+      //   path: "/",
+      //   maxAge: 60 * 60 * 24, // 1 day
+      // });
 
-        return {
-          token,
-          requiresMFA: false,
-          user: userWithoutPassword,
-        };
-      
+      return {
+        token,
+        requiresMFA: false,
+        user: userWithoutPassword,
+      };
     }
   );
 
@@ -158,58 +144,50 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      
-        const { email, password, name, phone, role, organizationId } =
-          request.body;
-          const a = users.email;
+      const { email, password, name, phone, role, organizationId } = request.body;
+      const a = users.email;
 
+      // Check if user already exists
+      const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
-        // Check if user already exists
-        const existingUser = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, email))
-          .limit(1);
+      if (existingUser.length) {
+        return reply.code(400).send({ error: "User already exists" });
+      }
 
-        if (existingUser.length) {
-          return reply.code(400).send({ error: "User already exists" });
-        }
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
+      // Create user
+      const newUser = await db
+        .insert(users)
+        .values({
+          email,
+          password: hashedPassword,
+          name,
+          phone,
+          role,
+          organizationId,
+        })
+        .returning();
 
-        // Create user
-        const newUser = await db
-          .insert(users)
-          .values({
-            email,
-            password: hashedPassword,
-            name,
-            phone,
-            role,
-            organizationId,
-          })
-          .returning();
+      // Send welcome email
+      // await emailService.sendWelcomeEmail({
+      //   email,
+      //   name,
+      //   tempPassword: "Please set your password",
+      // });
 
-        // Send welcome email
-        // await emailService.sendWelcomeEmail({
-        //   email,
-        //   name,
-        //   tempPassword: "Please set your password",
-        // });
+      // Send welcome SMS if phone provided
+      if (phone) {
+        await smsService.sendWelcomeMessage(phone, name);
+      }
 
-        // Send welcome SMS if phone provided
-        if (phone) {
-          await smsService.sendWelcomeMessage(phone, name);
-        }
+      const userWithoutPassword = newUser[0];
 
-        const userWithoutPassword = newUser[0];
-
-        return reply.code(201).send({
-          message: "User created successfully",
-          user: userWithoutPassword,
-        });
-      
+      return reply.code(201).send({
+        message: "User created successfully",
+        user: userWithoutPassword,
+      });
     }
   );
 
@@ -223,89 +201,78 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
+      const user = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          phone: users.phone,
+          role: users.role,
+          organizationId: users.organizationId,
+          organizationName: organizations.name,
+          isActive: users.isActive,
+          emailVerified: users.emailVerified,
+          phoneVerified: users.phoneVerified,
+          mfaEnabled: users.mfaEnabled,
+          mfaMethod: users.mfaMethod,
+          lastLogin: users.lastLogin,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .leftJoin(organizations, eq(users.organizationId, organizations.id))
+        .where(eq(users.id, request.jwtPayload.id))
+        .limit(1);
 
-        const user = await db
-          .select({
-            id: users.id,
-            email: users.email,
-            name: users.name,
-            phone: users.phone,
-            role: users.role,
-            organizationId: users.organizationId,
-            organizationName: organizations.name,
-            isActive: users.isActive,
-            emailVerified: users.emailVerified,
-            phoneVerified: users.phoneVerified,
-            mfaEnabled: users.mfaEnabled,
-            mfaMethod: users.mfaMethod,
-            lastLogin: users.lastLogin,
-            createdAt: users.createdAt,
-          })
-          .from(users)
-          .leftJoin(organizations, eq(users.organizationId, organizations.id))
-          .where(eq(users.id, request.jwtPayload.id))
-          .limit(1);
+      if (!user.length) {
+        return reply.code(404).send({ error: "User not found" });
+      }
 
-        if (!user.length) {
-          return reply.code(404).send({ error: "User not found" });
-        }
-
-        return user[0];
-      
+      return user[0];
     }
   );
 
   // Change password
- fastify.withTypeProvider<ZodTypeProvider>().post(
-  "/change-password",
-  {
-    schema: {
-      tags: ["Authentication"],
-      summary: "Change user password",
-      body: changePasswordSchema,
+  fastify.withTypeProvider<ZodTypeProvider>().post(
+    "/change-password",
+    {
+      schema: {
+        tags: ["Authentication"],
+        summary: "Change user password",
+        body: changePasswordSchema,
+      },
     },
-  },
-  async (request, reply) => {
-    const { currentPassword, newPassword } = request.body;
-    const userId = request.jwtPayload.id;
+    async (request, reply) => {
+      const { currentPassword, newPassword } = request.body;
+      const userId = request.jwtPayload.id;
 
-    // Get current password — single record instead of array
-    const foundUser = await db
+      // Get current password — single record instead of array
+      const foundUser = await db
         .select({ password: users.password })
         .from(users)
         .where(eq(users.id, userId))
         .limit(1)
-        .then(res => res[0]);
+        .then((res) => res[0]);
 
-    if (!foundUser) {
-      return reply.code(404).send({ error: "User not found" });
+      if (!foundUser) {
+        return reply.code(404).send({ error: "User not found" });
+      }
+
+      // Verify current password
+      const isValidPassword = await bcrypt.compare(currentPassword, foundUser.password);
+
+      if (!isValidPassword) {
+        return reply.code(400).send({ error: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, userId));
+
+      return { message: "Password changed successfully" };
     }
-
-    // Verify current password
-    const isValidPassword = await bcrypt.compare(
-      currentPassword,
-      foundUser.password
-    );
-
-    if (!isValidPassword) {
-      return reply
-        .code(400)
-        .send({ error: "Current password is incorrect" });
-    }
-
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update password
-    await db
-      .update(users)
-      .set({ password: hashedPassword, updatedAt: new Date() })
-      .where(eq(users.id, userId));
-
-    return { message: "Password changed successfully" };
-  }
-);
-
+  );
 
   // Verify MFA
   // fastify.post(
@@ -545,6 +512,4 @@ export default async function authRoutes(fastify: FastifyInstance) {
   //     }
   //   },
   // )
-
-  
 }

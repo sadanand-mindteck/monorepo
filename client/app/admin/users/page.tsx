@@ -13,7 +13,6 @@ import { toast } from "@/hooks/use-toast";
 import { UserResponse } from "@jims/shared/schema/user";
 import { ServerSideDataTable } from "@/components/ui/data-table-pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getOrganization } from "@/lib/api/organization";
 
 // Types
 export type User = UserResponse["data"][number];
