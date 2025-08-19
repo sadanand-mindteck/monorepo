@@ -10,16 +10,20 @@ export async function registerJwt(app: FastifyInstance) {
   await app.register(fastifyJwt, {
     secret: config.JWT_SECRET,
     sign: { expiresIn: "24h" },
+    cookie: {
+      cookieName: "auth_token", // cookie name
+      signed: false,
+    },
   });
 
   // Define authenticate decorator
-  app.decorate("authenticate", async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      await request.jwtVerify();
-    } catch {
-      reply.code(401).send({ error: "Unauthorized" });
-    }
-  });
+  // app.decorate("authenticate", async (request: FastifyRequest, reply: FastifyReply) => {
+  //   try {
+  //     await request.jwtVerify();
+  //   } catch {
+  //     reply.code(401).send({ error: "Unauthorized" });
+  //   }
+  // });
 
   // Global onRequest hook to protect all routes except a few
   app.addHook("onRequest", async (request, reply) => {

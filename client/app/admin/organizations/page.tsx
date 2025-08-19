@@ -42,14 +42,12 @@ export default function OrganizationsPage() {
       refetch();
     },
     onError: () => {
-      toast({ title: "Failed to delete Organization" });
+      toast({ title: "Failed to delete Organization", variant: "destructive" });
     },
   });
 
   function handleDelete(Organization: Organization, setDialogOpen: Dispatch<SetStateAction<boolean>>) {
-    deleteMutation.mutate(Organization.id, {
-      onSuccess: () => setDialogOpen(false),
-    });
+    deleteMutation.mutate(Organization.id);
   }
 
   const columns: ColumnDef<Organization>[] = [

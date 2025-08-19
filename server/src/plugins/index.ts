@@ -4,6 +4,7 @@ import { registerStatic } from "./static.js";
 import { registerMultipart } from "./multipart.js";
 import { registerJwt } from "./jwt.js";
 import { registerCors } from "./cors.js";
+import { registerCookies } from "./cookies.js";
 
 export async function registerPlugins(app: FastifyInstance) {
   await registerCors(app);
@@ -12,4 +13,5 @@ export async function registerPlugins(app: FastifyInstance) {
   await registerMultipart(app);
   await registerStatic(app);
   await registerSwagger(app);
+  await registerCookies(app);
 }

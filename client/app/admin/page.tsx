@@ -1,8 +1,9 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Package, Truck, BookOpen, AlertTriangle, MapPin, Activity, TrendingUp, Users, FileText } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Package, Truck, BookOpen, AlertTriangle, MapPin, Activity, TrendingUp, Users, FileText } from "lucide-react";
+import MapView from "@/components/map";
 
 export default function AdminDashboard() {
   const kpis = [
@@ -38,7 +39,7 @@ export default function AdminDashboard() {
       trend: "2 critical",
       color: "text-red-600",
     },
-  ]
+  ];
 
   const recentActivity = [
     {
@@ -66,7 +67,7 @@ export default function AdminDashboard() {
       action: "Warehouse operator checked in at Delhi Central Warehouse",
       status: "info",
     },
-  ]
+  ];
 
   return (
     <div className="space-y-6">
@@ -106,34 +107,7 @@ export default function AdminDashboard() {
             <CardDescription>Real-time locations of warehouses and exam centers</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-100 to-blue-100"></div>
-              <div className="relative z-10 text-center">
-                <MapPin className="h-12 w-12 text-blue-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Interactive Map</p>
-                <p className="text-xs text-gray-500">23 Warehouses • 156 Active Centers</p>
-              </div>
-
-              {/* Sample location pins */}
-              <div className="absolute top-4 left-8 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <div className="absolute top-12 right-12 w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-              <div className="absolute bottom-8 left-16 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <div className="absolute bottom-16 right-8 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            </div>
-            <div className="flex justify-between mt-4 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span>OK Status</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span>In Progress</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span>Attention</span>
-              </div>
-            </div>
+            <MapView />
           </CardContent>
         </Card>
 
@@ -152,11 +126,7 @@ export default function AdminDashboard() {
                 <div key={index} className="flex items-start gap-3">
                   <div
                     className={`w-2 h-2 rounded-full mt-2 ${
-                      activity.status === "success"
-                        ? "bg-green-500"
-                        : activity.status === "warning"
-                          ? "bg-yellow-500"
-                          : "bg-blue-500"
+                      activity.status === "success" ? "bg-green-500" : activity.status === "warning" ? "bg-yellow-500" : "bg-blue-500"
                     }`}
                   ></div>
                   <div className="flex-1 min-w-0">
@@ -197,5 +167,5 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

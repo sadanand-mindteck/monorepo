@@ -12,12 +12,7 @@ interface RHFInputProps {
   placeholder?: string;
 }
 
-export function RHFInput({
-  name,
-  label,
-  type = "text",
-  placeholder,
-}: RHFInputProps) {
+export function RHFInput({ name, label, type = "text", placeholder }: RHFInputProps) {
   const { control } = useFormContext();
 
   return (
@@ -27,12 +22,22 @@ export function RHFInput({
       render={({ field, fieldState: { error } }) => (
         <div className="space-y-2">
           <Label htmlFor={name}>{label}</Label>
-          <Input id={name} type={type} placeholder={placeholder} {...field} />
-          {error && (
-            <p className="text-sm text-red-500">
-              {(error?.message as string) ?? "Invalid input"}
-            </p>
-          )}
+          <Input
+            id={name}
+            type={type}
+            placeholder={placeholder}
+            {...field}
+            value={field.value ?? ""}
+            onChange={(e) => {
+              if (type === "number") {
+                const val = e.target.value;
+                field.onChange(val === "" ? undefined : Number(val));
+              } else {
+                field.onChange(e);
+              }
+            }}
+          />
+          {error && <p className="text-sm text-red-500">{(error?.message as string) ?? "Invalid input"}</p>}
         </div>
       )}
     />

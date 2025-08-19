@@ -117,19 +117,19 @@ export default async function authRoutes(fastify: FastifyInstance) {
         organizationId: user[0].organizationId,
       });
 
-      // reply.setCookie("token", token, {
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV === "production",
-      //   sameSite: "lax",
-      //   path: "/",
-      //   maxAge: 60 * 60 * 24, // 1 day
-      // });
-
-      return {
-        token,
-        requiresMFA: false,
-        user: userWithoutPassword,
-      };
+      reply
+        .setCookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60 * 24, // 1 day
+        })
+        .send({
+          token,
+          requiresMFA: false,
+          user: userWithoutPassword,
+        });
     }
   );
 
