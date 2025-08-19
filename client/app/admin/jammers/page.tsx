@@ -1,206 +1,220 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Package, MapPin, Calendar, Filter } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Building2, Edit3, Factory, Plus, Upload } from "lucide-react";
+import { CreateJammer } from "./createJammer";
+import { useMutation } from "@tanstack/react-query";
+import { deleteJammer, getJammers } from "@/lib/api/jammer";
+
+import { ColumnDef } from "@tanstack/react-table";
+import { Dispatch, ReactNode, SetStateAction, useState } from "react";
+import { DeleteButtonWithConfirm } from "@/components/utils/DeleteButtonWithConfirm";
+import { toast } from "@/hooks/use-toast";
+import { format } from "date-fns-tz";
+import { JammerResponse } from "@jims/shared/schema";
+import { ServerSideDataTable } from "@/components/ui/data-table-pagination";
+import { useQuery } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Get QueryClient from the context
+
+export type Jammer = JammerResponse["data"][number];
+const STATUS = ["ok", "faulty", "in_transit", "deployed", "maintenance", "All"];
+const colorMap: Record<Jammer["status"], string> = {
+  ok: "bg-gray-200 text-gray-800",
+  faulty: "bg-yellow-200 text-yellow-800",
+  in_transit: "bg-green-200 text-green-800",
+  deployed: "bg-blue-200 text-blue-800",
+  maintenance: "bg-red-200 text-red-800",
+};
+
+const iconMap: Record<Jammer["orgType"], React.ElementType> = {
+  warehouse: Factory,
+  installation_agency: Building2,
+};
 
 export default function JammersPage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedJammer, setSelectedJammer] = useState<Jammer | null>(null);
+  const [open, setOpen] = useState(false);
 
-  const jammers = [
-    {
-      serialNumber: "JM-2024-001",
-      model: "SecureBlock Pro",
-      status: "OK",
-      location: "Delhi Central Warehouse",
-      lastMaintenance: "2024-01-15",
-      batteryLevel: "98%",
-      assignedTo: "Government College",
-    },
-    {
-      serialNumber: "JM-2024-002",
-      model: "SecureBlock Pro",
-      status: "In Transit",
-      location: "En route to Mumbai",
-      lastMaintenance: "2024-01-10",
-      batteryLevel: "95%",
-      assignedTo: "Technical Institute",
-    },
-    {
-      serialNumber: "JM-2024-003",
-      model: "SecureBlock Lite",
-      status: "Faulty",
-      location: "Mumbai Storage Facility",
-      lastMaintenance: "2024-01-05",
-      batteryLevel: "12%",
-      assignedTo: "Under Repair",
-    },
-    {
-      serialNumber: "JM-2024-004",
-      model: "SecureBlock Pro",
-      status: "Deployed",
-      location: "Central University",
-      lastMaintenance: "2024-01-20",
-      batteryLevel: "89%",
-      assignedTo: "Engineering Exam",
-    },
-    {
-      serialNumber: "JM-2024-005",
-      model: "SecureBlock Max",
-      status: "OK",
-      location: "Bangalore Warehouse Hub",
-      lastMaintenance: "2024-01-18",
-      batteryLevel: "100%",
-      assignedTo: "Available",
-    },
-  ]
+  const [page, setPage] = useState("1");
+  const [limit, setLimit] = useState("10");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "OK":
-        return "bg-green-100 text-green-800"
-      case "Deployed":
-        return "bg-blue-100 text-blue-800"
-      case "In Transit":
-        return "bg-yellow-100 text-yellow-800"
-      case "Faulty":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: [page, limit, search, status],
+    queryFn: () => getJammers({ page, limit, search, status }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteJammer(id),
+    onSuccess: () => {
+      toast({ title: "Jammer deleted successfully" });
+      refetch();
+    },
+    onError: () => {
+      toast({ title: "Failed to delete Jammer" });
+    },
+  });
+
+  function handleDelete(exam: Jammer, setDialogOpen: Dispatch<SetStateAction<boolean>>) {
+    deleteMutation.mutate(exam.id, {
+      onSuccess: () => setDialogOpen(false),
+    });
   }
 
-  const getBatteryColor = (level: string) => {
-    const numLevel = Number.parseInt(level)
-    if (numLevel > 80) return "text-green-600"
-    if (numLevel > 50) return "text-yellow-600"
-    return "text-red-600"
-  }
+  const columns: ColumnDef<Jammer>[] = [
+    {
+      accessorKey: "model",
+      header: "Modal",
+      cell: ({ row }) => <div className="font-medium">{row.getValue("model")}</div>,
+    },
+    {
+      accessorKey: "serialNumber",
+      header: "serial Number",
+      cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("serialNumber")}</div>,
+    },
+
+    {
+      accessorKey: "locationName",
+      header: "Location Name(org)",
+    },
+    {
+      accessorKey: "orgType",
+      header: "Org Type",
+      cell: ({ row }) => {
+        const type = row.getValue("orgType") as Jammer["orgType"];
+        const Icon = iconMap[type];
+
+        return (
+          <div className="flex items-center gap-2">
+            <Icon className={`w-5 h-5 ${type === "warehouse" ? "stroke-amber-600" : "stroke-blue-600"}`} />
+            <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as Jammer["status"];
+        return <Badge className={colorMap[status]}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const exam = row.original;
+        return (
+          <div className="flex gap-2">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => {
+                setSelectedJammer(exam);
+                setOpen(true);
+              }}
+            >
+              <Edit3 />
+            </Button>
+            <DeleteButtonWithConfirm isLoading={deleteMutation.isPending} item={exam} onConfirm={handleDelete} />
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Jammers</h1>
-          <p className="text-muted-foreground">Master inventory of all jammers in the system</p>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by serial number, model, or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Status
-            </Button>
-            <Button variant="outline">
-              <MapPin className="h-4 w-4 mr-2" />
-              Location
-            </Button>
-            <Button variant="outline">
-              <Package className="h-4 w-4 mr-2" />
-              Model
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Jammers Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Jammers</CardTitle>
-          <CardDescription>Complete inventory with real-time status and location tracking</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Serial Number</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Battery</TableHead>
-                <TableHead>Last Maintenance</TableHead>
-                <TableHead>Assigned To</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {jammers.map((jammer) => (
-                <TableRow key={jammer.serialNumber}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono">{jammer.serialNumber}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{jammer.model}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(jammer.status)}>{jammer.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      {jammer.location}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={getBatteryColor(jammer.batteryLevel)}>{jammer.batteryLevel}</span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {jammer.lastMaintenance}
-                    </div>
-                  </TableCell>
-                  <TableCell>{jammer.assignedTo}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">2,847</div>
+            <div className="text-2xl font-bold">4</div>
             <p className="text-sm text-muted-foreground">Total Jammers</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">2,654</div>
-            <p className="text-sm text-muted-foreground">OK Status</p>
+            <div className="text-2xl font-bold">183</div>
+            <p className="text-sm text-muted-foreground">Total Centers</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">156</div>
-            <p className="text-sm text-muted-foreground">In Transit</p>
+            <div className="text-2xl font-bold">44</div>
+            <p className="text-sm text-muted-foreground">Assigned Agencies</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">193</div>
-            <p className="text-sm text-muted-foreground">Need Attention</p>
+            <div className="text-2xl font-bold">2,196</div>
+            <p className="text-sm text-muted-foreground">Jammers Required</p>
           </CardContent>
         </Card>
       </div>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Jammers</h1>
+          <p className="text-muted-foreground">Manage Jammer schedules and center assignments</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Bulk Upload Jammer
+          </Button>
+          <Button
+            variant="default"
+            onClick={() => {
+              setOpen(true);
+              setSelectedJammer(null);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Jammer
+          </Button>
+
+          {open && (
+            <CreateJammer
+              refetchJammers={refetch}
+              selectedJammer={selectedJammer}
+              setSelectedJammer={setSelectedJammer}
+              setOpen={setOpen}
+            />
+          )}
+        </div>
+      </div>
+      {/* Jammers Table */}
+
+      <ServerSideDataTable<Jammer>
+        columns={columns}
+        data={data}
+        isLoading={isLoading}
+        limit={limit}
+        page={page}
+        setLimit={setLimit}
+        setPage={setPage}
+        setSearch={setSearch}
+        search={search}
+      >
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger>
+            <SelectValue placeholder="filter Status" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </ServerSideDataTable>
     </div>
-  )
+  );
 }

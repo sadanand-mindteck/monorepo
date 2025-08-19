@@ -48,6 +48,7 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
           status: jammers.status,
           currentLocationId: jammers.currentLocationId,
           locationName: organizations.name,
+          orgType: organizations.type,
           lastMaintenance: jammers.lastMaintenance,
           createdAt: jammers.createdAt,
         })
@@ -128,7 +129,10 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const jammerData = request.body;
-      const newJammer = await db.insert(jammers).values({...jammerData,createdBy:request.jwtPayload.id}).returning();
+      const newJammer = await db
+        .insert(jammers)
+        .values({ ...jammerData, currentLocationId: +request.jwtPayload.organizationId, createdBy: request.jwtPayload.id })
+        .returning();
 
       return reply.code(201).send(newJammer[0]);
     }
@@ -147,11 +151,11 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const updateData = { ...request.body, updatedAt: new Date() };
+      const updateData = { ...request.body, currentLocationId: +request.jwtPayload.organizationId, updatedAt: new Date() };
 
       const updatedJammer = await db
         .update(jammers)
-        .set({...updateData,createdBy:request.jwtPayload.id})
+        .set({ ...updateData, createdBy: request.jwtPayload.id })
         .where(eq(jammers.id, Number(id)))
         .returning();
 
@@ -170,7 +174,6 @@ export default async function jammerRoutes(fastify: FastifyInstance) {
       schema: {
         tags: ["Jammers"],
         summary: "delete jammer",
-        body: updateJammerSchema,
         params: requestParam,
       },
     },

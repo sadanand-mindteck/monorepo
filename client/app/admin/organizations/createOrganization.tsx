@@ -10,7 +10,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { OrganizationInput, createOrganizationSchema } from "@jims/shared/schema/organization";
-import { createOrganization, getOrganizations, updateOrganization } from "@/lib/api/organization";
+import { createOrganization, updateOrganization } from "@/lib/api/organization";
 import { Organization } from "./page";
 import { RHFInputTextArea } from "@/components/rhf/rhf-input-textarea";
 
@@ -57,11 +57,6 @@ export function CreateOrganization({
       console.error("Failed to save Organization ❌", error);
       toast({ title: "Failed to save Organization" });
     },
-  });
-
-  const { data: orgData, isLoading: orgLoading } = useQuery({
-    queryKey: ["organization"],
-    queryFn: () => getOrganizations(),
   });
 
   const onSubmit = (data: OrganizationInput) => {

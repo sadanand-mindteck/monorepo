@@ -12,7 +12,7 @@ import { Dispatch, SetStateAction, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { UserInput, createUserSchema } from "@jims/shared/schema/user";
 import { User } from "./page";
-import { getOrganization } from "@/lib/api/organization";
+import { getOrganizations } from "@/lib/api/organization";
 
 const defaultValues: UserInput = {
   name: "",
@@ -62,7 +62,7 @@ export function CreateUser({
 
   const { data: orgData, isLoading: orgLoading } = useQuery({
     queryKey: ["organization"],
-    queryFn: () => getOrganization(),
+    queryFn: () => getOrganizations(),
   });
 
   const onSubmit = (data: UserInput) => {
