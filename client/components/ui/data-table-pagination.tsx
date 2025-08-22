@@ -24,7 +24,7 @@ export interface ServerSideDataTableProps<T> {
   setLimit: React.Dispatch<React.SetStateAction<string>>;
   search?: string;
   setSearch: React.Dispatch<React.SetStateAction<string>>;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function ServerSideDataTable<T>({

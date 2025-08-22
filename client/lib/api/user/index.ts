@@ -16,6 +16,9 @@ async function getUsers({ page, limit, search, status, role }: GetDataPagination
     })
   ).data;
 }
+async function getAllByAgencyId(id: string) {
+  return (await axiosInstance<UserResponse["data"]>("/users/getAllByAgencyId/" + id)).data;
+}
 
 async function deleteUser(id: number) {
   const { data } = await axiosInstance.delete("/users/" + id);
@@ -32,4 +35,4 @@ async function updateUser(id: number, req: UserInput) {
   return data;
 }
 
-export { getUsers, createUser, updateUser, deleteUser };
+export { getUsers, getAllByAgencyId, createUser, updateUser, deleteUser };

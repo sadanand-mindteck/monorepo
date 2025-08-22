@@ -17,7 +17,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
     {
       schema: {
         tags: ["User"],
-        summary: "Get all users",
+        summary: "Get all users pagination",
         querystring: userQuerySchema,
         // response: {
         //   200: userResponse,
@@ -85,6 +85,36 @@ export default async function userRoutes(fastify: FastifyInstance) {
       };
 
       return a;
+    }
+  );
+
+  fastify.withTypeProvider<ZodTypeProvider>().get(
+    "/getAllByAgencyId/:id",
+    {
+      schema: {
+        tags: ["User"],
+        summary: "Get all users",
+        params: requestParam,
+
+        // response: {
+        //   200: userResponse,
+        // },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const data = await db
+        .select({
+          id: usersTable.id,
+          name: usersTable.name,
+          isActive: usersTable.isActive,
+          organizationType: organizations.type,
+        })
+        .from(usersTable)
+        .leftJoin(organizations, eq(usersTable.organizationId, organizations.id))
+        .where(and(eq(organizations.id, +id), usersTable.isActive));
+
+      reply.code(200).send(data);
     }
   );
 

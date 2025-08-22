@@ -11,6 +11,10 @@ async function getExaminations({ page, limit, search, status }: GetDataPaginatio
   ).data;
 }
 
+async function getAllActiveExaminations() {
+  return (await axiosInstance<ExaminationResponse["data"]>("/examinations/getAllActive")).data;
+}
+
 async function deleteExamination(id: number) {
   const { data } = await axiosInstance.delete("/examinations/" + id);
   return data;
@@ -26,4 +30,4 @@ async function updateExamination(id: number, req: ExaminationInput) {
   return data;
 }
 
-export { getExaminations, createExamination, updateExamination, deleteExamination };
+export { getExaminations, getAllActiveExaminations, createExamination, updateExamination, deleteExamination };

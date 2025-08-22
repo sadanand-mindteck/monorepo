@@ -1,4 +1,5 @@
 import { pgTable, serial, varchar, text, timestamp, integer, boolean, decimal, pgEnum, AnyPgColumn, date } from "drizzle-orm/pg-core";
+import { sql } from "./connection.js";
 
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["admin", "warehouse", "operator"]);
@@ -11,9 +12,16 @@ export const fileTypeEnum = pgEnum("file_type", ["image", "document", "certifica
 export const taskTypeEnum = pgEnum("task_type", ["attendance", "receive", "install", "power_on", "upload_cert", "power_off"]);
 export const installationTaskStatusEnum = pgEnum("installation_task_status", ["pending", "completed"]);
 export const entityTypeEnum = pgEnum("entity_type", ["jammer", "shipment", "installation"]);
+export const shipmentStageEnum = pgEnum("shipment_stage", [
+  "warehouse_to_agency",
+  "agency_to_center",
+  "center_to_agency",
+  "agency_to_warehouse",
+]);
+
 // Users table
 export const users = pgTable("users", {
-  id: serial("id").primaryKey().notNull().unique(),
+  id: serial("id").primaryKey().notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: varchar("password", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -109,9 +117,12 @@ export const jammers = pgTable("jammers", {
 export const shipments = pgTable("shipments", {
   id: serial("id").primaryKey(),
   shipmentCode: varchar("shipment_code", { length: 50 }).notNull().unique(),
+  shipmentStage: shipmentStageEnum("shipment_stage").notNull(),
+
   fromLocationId: integer("from_location_id").references(() => organizations.id),
   toLocationId: integer("to_location_id").references(() => organizations.id),
   toCenterId: integer("to_center_id").references(() => examCenters.id),
+
   status: shipmentStatusEnum("status").default("pending").notNull(),
   docketNumber: varchar("docket_number", { length: 100 }),
   totalJammers: integer("total_jammers").default(0),

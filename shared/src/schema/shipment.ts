@@ -13,16 +13,19 @@ export const shipmentSchema = createSelectSchema(shipments, {
   totalJammers: z.number().int().min(0, "Total jammers must be a non-negative integer"),
 }).omit({ updatedAt: true, createdAt: true });
 
-export const createShipmentSchema = shipmentSchema.omit({
-  id: true,
-  createdBy: true,
-  status: true,
-  shipmentCode: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  jammerIds:z.array(z.number().int().positive())
-});
+export const createShipmentSchema = shipmentSchema
+  .omit({
+    id: true,
+    createdBy: true,
+    status: true,
+    shipmentCode: true,
+    createdAt: true,
+    updatedAt: true,
+    totalJammers: true,
+  })
+  .extend({
+    jammerIds: z.array(z.number().int().positive()),
+  });
 
 export const updateShipmentSchema = shipmentSchema.pick({
   status: true,

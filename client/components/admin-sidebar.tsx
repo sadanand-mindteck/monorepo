@@ -9,15 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import {
-  LayoutDashboard,
-  BookOpen,
-  Building2,
-  Package,
-  Users,
-  FileText,
-  Shield,
-} from "lucide-react";
+import { LayoutDashboard, BookOpen, Building2, Package, Users, FileText, Shield, ShipWheel } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 
@@ -48,9 +40,14 @@ const menuItems = [
     icon: Users,
   },
   {
-    title: "Reports",
-    url: "/admin/reports",
+    title: "Exam center",
+    url: "/admin/exam-center",
     icon: FileText,
+  },
+  {
+    title: "Shipment",
+    url: "/admin/shipment",
+    icon: ShipWheel,
   },
 ];
 
@@ -71,9 +68,7 @@ export function AdminSidebar() {
           </div>
           <div>
             <h2 className="font-semibold">JIMS Admin</h2>
-            <p className="text-xs text-muted-foreground">
-              BEL Management Portal
-            </p>
+            <p className="text-xs text-muted-foreground">BEL Management Portal</p>
           </div>
         </div>
       </SidebarHeader>
@@ -83,17 +78,10 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
-                 const itemSegment = pathname.split("/").pop();
+                const itemSegment = pathname.split("/").pop();
                 const isActive = itemSegment === getLastPathSegment(item.url);
                 return (
-                  <SidebarMenuItem
-                    key={item.title}
-                    className={`group ${
-                      isActive
-                        ? "bg-accent text-accent-foreground font-medium"
-                        : ""
-                    }`}
-                  >
+                  <SidebarMenuItem key={item.title} className={`group ${isActive ? "bg-accent text-accent-foreground font-medium" : ""}`}>
                     <SidebarMenuButton asChild>
                       <Link href={item.url}>
                         <item.icon />

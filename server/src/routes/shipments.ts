@@ -28,6 +28,7 @@ export default async function shipmentRoutes(fastify: FastifyInstance) {
         .select({
           id: shipments.id,
           shipmentCode: shipments.shipmentCode,
+          shipmentStage: shipments.shipmentStage,
           status: shipments.status,
           totalJammers: shipments.totalJammers,
           docketNumber: shipments.docketNumber,
@@ -47,8 +48,8 @@ export default async function shipmentRoutes(fastify: FastifyInstance) {
 
       // Get total count
       const totalQuery = await db.select({ count: count() }).from(shipments);
-        
-      const  total = totalQuery[0]!.count;
+
+      const total = totalQuery[0]!.count;
 
       return {
         data: results,
@@ -78,6 +79,7 @@ export default async function shipmentRoutes(fastify: FastifyInstance) {
       const shipment = await db
         .select({
           id: shipments.id,
+          shipmentStage: shipments.shipmentStage,
           shipmentCode: shipments.shipmentCode,
           status: shipments.status,
           totalJammers: shipments.totalJammers,
@@ -130,7 +132,7 @@ export default async function shipmentRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { fromLocationId, toLocationId, toCenterId, docketNumber, jammerIds } = request.body;
+      const { fromLocationId, shipmentStage, toLocationId, toCenterId, docketNumber, jammerIds } = request.body;
 
       // Generate shipment code
       const shipmentCode = `SH-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
@@ -140,6 +142,7 @@ export default async function shipmentRoutes(fastify: FastifyInstance) {
         const [shipment] = await tx
           .insert(shipments)
           .values({
+            shipmentStage,
             shipmentCode,
             fromLocationId,
             toLocationId,
