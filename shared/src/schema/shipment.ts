@@ -11,7 +11,7 @@ export const shipmentSchema = createSelectSchema(shipments, {
   toCenterId: z.number().int().positive().optional(),
   docketNumber: z.string().max(100).optional(),
   totalJammers: z.number().int().min(0, "Total jammers must be a non-negative integer"),
-}).omit({ updatedAt: true, createdAt: true });
+});
 
 export const createShipmentSchema = shipmentSchema
   .omit({

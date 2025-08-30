@@ -10,7 +10,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createShipment, updateShipment } from "@/lib/api/shipment";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import { ShipmentInput, ShipmentResponse, createShipmentSchema } from "@jims/shared/schema/shipment";
+import { ShipmentInput, createShipmentSchema } from "@jims/shared/schema/shipment";
 import { Shipment } from "./page";
 import { getOrganizations } from "@/lib/api/organization";
 
@@ -103,6 +103,7 @@ export function CreateShipment({
             className="grid grid-cols-1 md:grid-cols-2 gap-4  max-h-[500px] overflow-y-auto px-2"
           >
             <RHFInput name="Docket Number" label="docketNumber" />
+            <RHFSelect name="shipmentStage" label="Shipment Stage" placeholder="Select Shipment Stage" options={shipmentStage} />
             <RHFSelect
               name="fromLocationId"
               label="From Location"
@@ -122,7 +123,6 @@ export function CreateShipment({
               placeholder="Select Center"
               options={orgData?.map((o) => ({ label: o.name, value: o.id.toString() })) || []}
             />
-            <RHFSelect name="shipmentStage" label="Shipment Stage" placeholder="Select Shipment Stage" options={shipmentStage} />
             <RHFInput name="dispatchedAt" label="Dispatched At" type="datetime-local" />
 
             <div className="md:col-span-2 flex justify-end pt-2">
